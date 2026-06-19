@@ -33,7 +33,7 @@
 #define GLIDE_BUTTON 18
 #define PRIORITY_BUTTON 19
 //MCP5
-#define DCO1_SPARE_BUTTON 20
+#define DCO_AT_BUTTON 20
 #define DCO1_OCT_BUTTON 21
 //MCP6
 // no buttons
@@ -58,13 +58,16 @@
 //MCP13
 #define LFO1_WAVE_BUTTON 34
 #define LFO2_WAVE_BUTTON 35
-#define AMP_ENV_GATE_BUTTON 40
-#define LFO3_RETRIG_BUTTON 36
-#define LFO3_MULT_BUTTON 36
+#define AMP_ENV_GATE_BUTTON 36
+#define LFO3_RETRIG_BUTTON 37
+#define LFO3_MULT_BUTTON 38
 //MCP14
-#define EFFECT_NUM_BUTTON 37
-#define EFFECT_BANK_BUTTON 38
-#define EFFECT_ROTARY_BUTTON 39
+#define EFFECT_NUM_BUTTON 39
+#define EFFECT_BANK_BUTTON 40
+#define EFFECT_ROTARY_BUTTON 41
+#define LFO1_RETRIG_BUTTON 42
+#define NOISE_SRC_BUTTON 43
+#define FILTER_AT_BUTTON 44
 
 
 
@@ -176,6 +179,7 @@ RotaryEncOverMCP rotaryEncoders[] = {
   RotaryEncOverMCP(&mcp14, 2, 3, &RotaryEncoderChanged, 53),
   RotaryEncOverMCP(&mcp14, 4, 5, &RotaryEncoderChanged, 54),
   RotaryEncOverMCP(&mcp14, 8, 9, &RotaryEncoderChanged, 55),
+  RotaryEncOverMCP(&mcp2, 5, 4, &RotaryEncoderChanged, 56),
 
 };
 
@@ -198,6 +202,7 @@ Button arp_rand_Button = Button(&mcp1, 11, ARP_RAND_BUTTON, &mainButtonChanged);
 
 Button arp_start_stop_Button = Button(&mcp2, 0, ARP_START_STOP_BUTTON, &mainButtonChanged);
 Button arp_latch_Button = Button(&mcp2, 1, ARP_LATCH_BUTTON, &mainButtonChanged);
+Button filter_at_Button = Button(&mcp2, 8, FILTER_AT_BUTTON, &mainButtonChanged);
 
 Button mode_Button = Button(&mcp3, 0, MODE_BUTTON, &mainButtonChanged);
 Button hold_Button = Button(&mcp3, 1, HOLD_BUTTON, &mainButtonChanged);
@@ -211,13 +216,14 @@ Button poly1_Button = Button(&mcp3, 11, POLY1_BUTTON, &mainButtonChanged);
 Button glide_Button = Button(&mcp4, 0, GLIDE_BUTTON, &mainButtonChanged);
 Button priority_Button = Button(&mcp4, 1, PRIORITY_BUTTON, &mainButtonChanged);
 
-Button dco1_spare_Button = Button(&mcp5, 10, DCO1_SPARE_BUTTON, &mainButtonChanged);
+Button dco_at_Button = Button(&mcp5, 10, DCO_AT_BUTTON, &mainButtonChanged);
 Button dco1_oct_Button = Button(&mcp5, 11, DCO1_OCT_BUTTON, &mainButtonChanged);
 
 Button dco2_oct_Button = Button(&mcp7, 6, DCO2_OCT_BUTTON, &mainButtonChanged);
 Button dco2_sync_Button = Button(&mcp7, 10, DCO2_SYNC_BUTTON, &mainButtonChanged);
 
 Button vcf_type_Button = Button(&mcp8, 6, VCF_TYPE_BUTTON, &mainButtonChanged);
+Button noise_src_Button = Button(&mcp8, 8, NOISE_SRC_BUTTON, &mainButtonChanged);
 Button vcf_pole_Button = Button(&mcp8, 11, VCF_POLE_BUTTON, &mainButtonChanged);
 Button vcf_eg_inv_Button = Button(&mcp8, 12, VCF_EG_INV_BUTTON, &mainButtonChanged);
 Button vcf_keytrack_Button = Button(&mcp8, 13, VCF_KEYTRACK_BUTTON, &mainButtonChanged);
@@ -238,6 +244,7 @@ Button amp_env_gate_Button = Button(&mcp13, 8, AMP_ENV_GATE_BUTTON, &mainButtonC
 Button lfo3_retrig_Button = Button(&mcp13, 11, LFO3_RETRIG_BUTTON, &mainButtonChanged);
 Button lfo3_mult_Button = Button(&mcp13, 13, LFO3_MULT_BUTTON, &mainButtonChanged);
 
+Button lfo1_retrig_Button = Button(&mcp14, 6, LFO1_RETRIG_BUTTON, &mainButtonChanged);
 Button effect_num_Button = Button(&mcp14, 10, EFFECT_NUM_BUTTON, &mainButtonChanged);
 Button effect_bank_Button = Button(&mcp14, 11, EFFECT_BANK_BUTTON, &mainButtonChanged);
 Button effect_rotary_Button = Button(&mcp14, 13, EFFECT_ROTARY_BUTTON, &mainButtonChanged);
@@ -265,7 +272,7 @@ Button *mainButtons[] = {
   &poly1_Button,
   &glide_Button,
   &priority_Button,
-  &dco1_spare_Button,
+  &dco_at_Button,
   &dco1_oct_Button,
   &dco2_oct_Button,
   &dco2_sync_Button,
@@ -287,6 +294,9 @@ Button *mainButtons[] = {
   &effect_bank_Button,
   &effect_rotary_Button,
   &amp_env_gate_Button,
+  &lfo1_retrig_Button,
+  &noise_src_Button,
+  &filter_at_Button,
 };
 
 Button *allButtons[] = {
@@ -310,7 +320,7 @@ Button *allButtons[] = {
   &poly1_Button,
   &glide_Button,
   &priority_Button,
-  &dco1_spare_Button,
+  &dco_at_Button,
   &dco1_oct_Button,
   &dco2_oct_Button,
   &dco2_sync_Button,
@@ -332,6 +342,9 @@ Button *allButtons[] = {
   &effect_bank_Button,
   &effect_rotary_Button,
   &amp_env_gate_Button,
+  &lfo1_retrig_Button,
+  &noise_src_Button,
+  &filter_at_Button,
 };
 
 // MCP LEDS
@@ -369,11 +382,14 @@ Button *allButtons[] = {
 #define PRIORITY_LED_RED 15
 
 // GP5
-#define DCO1_SPARE_LED 12
+#define FILTER_AT_LED 7
+#define DCO_AT_LED 12
 #define DCO1_OCT_LED_GREEN 14
 #define DCO1_OCT_LED_RED 15
 
 // GP6
+#define NOISE_SRC_LED_RED 7
+#define NOISE_SRC_LED_GREEN 15
 
 // GP7
 #define DCO2_OCT_LED_RED 7
@@ -415,6 +431,7 @@ Button *allButtons[] = {
 #define LFO3_MULT_LED_GREEN 15
 
 // GP14
+#define LFO1_RETRIG_LED 7
 #define EFFECT_ROTARY_LED_RED 14
 #define EFFECT_ROTARY_LED_GREEN 15
 
@@ -487,9 +504,13 @@ void setupHardware() {
   mcp4.pinMode(8, OUTPUT);  // pin 15 = GPB7 of MCP2301X
   mcp4.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X
 
+  mcp5.pinMode(7, OUTPUT);   // pin 7 = GPA7 of MCP2301X
   mcp5.pinMode(12, OUTPUT);   // pin 7 = GPA7 of MCP2301X
   mcp5.pinMode(14, OUTPUT);  // pin 15 = GPB7 of MCP2301X
   mcp5.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X
+
+  mcp6.pinMode(7, OUTPUT);  // pin 15 = GPB7 of MCP2301X
+  mcp6.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X
 
   mcp7.pinMode(7, OUTPUT);   // pin 7 = GPA7 of MCP2301X
   mcp7.pinMode(11, OUTPUT);   // pin 7 = GPA7 of MCP2301X
@@ -523,6 +544,7 @@ void setupHardware() {
   mcp13.pinMode(14, OUTPUT);  // pin 15 = GPB7 of MCP2301X  
   mcp13.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X   
 
+  mcp14.pinMode(7, OUTPUT);   // pin 7 = GPA7 of MCP2301X
   mcp14.pinMode(14, OUTPUT);   // pin 7 = GPA7 of MCP2301X
   mcp14.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X     
 }

@@ -31,7 +31,7 @@ const float PULSEWIDTH[128] = {0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6
 #define NO_OF_VOICES 12
 #define MAX_CHORD_NOTES 12
 #define CHORD_HOLD_CAPTURE_WINDOW 120  // in milliseconds (adjust as needed)
-#define NO_OF_PARAMS 88
+#define NO_OF_PARAMS 100
 const char* INITPATCHNAME = "Initial Patch";
 const uint32_t CLICK_DURATION = 250;
 #define HOLD_DURATION 1000

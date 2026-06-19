@@ -34,7 +34,7 @@ bool chordHoldCaptureWindowActive = false;
 
 // adding encoders
 bool rotaryEncoderChanged(int id, bool clockwise, int speed);
-#define NUM_ENCODERS 55
+#define NUM_ENCODERS 56
 unsigned long lastTransition[NUM_ENCODERS + 1];
 boolean accelerate = true;
 int speed = 1;
@@ -42,9 +42,9 @@ int value = 0;
 float lastSpeed[NUM_ENCODERS + 1] = { 0 }; // Or whatever your encoder count is
 bool halfStepMode = false;
 
-int upperData[87];
-int lowerData[87];
-int panelData[87];
+int upperData[96];
+int lowerData[96];
+int panelData[96];
 
 #define P_sysex 0
 #define P_LFO2Rate 1
@@ -131,6 +131,13 @@ int panelData[87];
 #define P_arpRate 82
 #define P_LFO3Waveform 83
 #define P_LFO2Waveform 84
+#define P_osc2envDepth 85
+#define P_noiseSrc 86
+#define P_lfo1retrig 87
+#define P_osc1envPWM 88
+#define P_osc2envPWM 89
+#define P_dco_at_SW 90
+#define P_filter_at_SW 91
 
 int playMode = 0;
 int lowerSplitVoicePointer = 0;
@@ -208,44 +215,44 @@ float glideTimestr = 0;
 float osc2Detunestr = 0;
 int osc2Intervalstr = 0;
 float noiseLevelstr = 0;
-float osc2SawLevelstr = 0;
-float osc1SawLevelstr = 0;
-float osc2PulseLevelstr = 0;
-float osc1PulseLevelstr = 0;
-float osc2TriangleLevelstr = 0;
-float osc1SubLevelstr = 0;
+int osc2SawLevelstr = 0;
+int osc1SawLevelstr = 0;
+int osc2PulseLevelstr = 0;
+int osc1PulseLevelstr = 0;
+int osc2TriangleLevelstr = 0;
+int osc1SubLevelstr = 0;
 float filterCutoffstr = 0;
-float filterLFOstr = 0;
-float filterResstr = 0;
-float filterEGlevelstr = 0;
+int filterLFOstr = 0;
+int filterResstr = 0;
+int filterEGlevelstr = 0;
 float LFO1Ratestr = 0;
-float LFO1Delaystr = 0;
-float LFO1Slopestr = 0;
-float LFO3Delaystr = 0;
+int LFO1Delaystr = 0;
+int LFO1Slopestr = 0;
+int LFO3Delaystr = 0;
 float LFO3Ratestr = 0;
 int LFO1Waveformstr = 0;
 float filterAttackstr = 0;
 float filterDecaystr = 0;
-float filterSustainstr = 0;
+int filterSustainstr = 0;
 float filterReleasestr = 0;
-float amDepthstr = 0;
-float volumeControlstr = 0;
+int amDepthstr = 0;
+int volumeControlstr = 0;
 float ampReleasestr = 0;
-float ampSustainstr = 0;
+int ampSustainstr = 0;
 float ampDecaystr = 0;
 float ampAttackstr = 0;
 float pitchReleasestr = 0;
-float pitchSustainstr = 0;
+int pitchSustainstr = 0;
 float pitchDecaystr = 0;
 float pitchAttackstr = 0;
-float effectPot1str = 0;
-float effectPot2str = 0;
-float effectPot3str = 0;
+int effectPot1str = 0;
+int effectPot2str = 0;
+int effectPot3str = 0;
 float effectsMixstr = 0;
-float filterLevel1str = 0;
-float filterLevel2str = 0;
-float keytrackstr = 0;
-float modWheelDepthstr = 0;
+int filterLevel1str = 0;
+int filterLevel2str = 0;
+int keytrackstr = 0;
+int modWheelDepthstr = 0;
 float arpRatestr = 0;
 int modWheelLevelstr = 0;
 int PitchBendLevelstr = 0;  // for display
@@ -253,6 +260,7 @@ float osc1sawDetunestr = 0;
 int osc1sawCountstr = 0;
 int LFO3Waveformstr = 0;
 int LFO2Waveformstr = 0;
+int osc2envDepthstr = 0;
 
 boolean wholemode = true;
 boolean dualmode = false;

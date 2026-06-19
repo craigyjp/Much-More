@@ -4,13 +4,13 @@
 #define   CCLfoDepth  3 //pitch LFO amount - panel control
 
 #define   CCglideTime 5
-
+#define   CCdco_at_SW 6
 #define   CCvolumeControl 7
 #define   CCfilterA 8
 #define   CCfilterB 9
 #define   CCamDepth 11
 #define   CCosc2Interval 12
-
+#define   CCfilter_at_SW 13
 #define   CCATDepth 14
 #define   CCfmDepth 15
 #define   CCosc1PW 16
@@ -26,7 +26,7 @@
 #define   CCfilterLevel1 26
 #define   CCFilterLoop 27
 #define   CCAmpLoop 28
-
+#define   CCosc2envPWM 29
 #define   CCkeyTrack 30
 #define   CCkeyTrackSW 31
 #define   CCwholemode 32
@@ -35,10 +35,10 @@
 #define   CCeffectNumSW 35
 #define   CCeffectBankSW 36
 #define   CCmonoMulti 37
-#define   CCpmDestDCO1SW 38
+#define   CCnoiseSrc 38
 #define   CCfilterType 39
-#define   CCpmDestFilterSW 40
-
+#define   CClfo1retrig 40
+#define   CCosc2EnvDepth 41
 #define   CCvcaVel 42
 #define   CCfilterVel 43
 #define   CCfilterRelease 44
@@ -71,7 +71,7 @@
 #define   CCLFO3Rate 72
 #define   CCLFO3Delay 73
 #define   CCfilterCutoff 74
-
+#define   CCosc1envPWM 75
 #define   CClfoAlt 76
 #define   CCLFO1Rate 77
 #define   CClfoMult 78
@@ -140,6 +140,8 @@
 #define CC_MW_FM_DEPTH      29  /* mod wheel -> FM depth               */
 #define CC_ADC_FM_DEPTH     30  /* ADC FM input depth                  */
 #define CC_XMOD_DEPTH       53  /* X-MOD depth DCO2->DCO1 freq         */
+#define CC_AT_FM_ENABLE     68  /* aftertouch -> DCO FM on/off (>=64)  */
+#define CC_AT_FILTER_ENABLE 69  /* aftertouch -> filter CV on/off      */
 
 /* --- LFO2 (PWM) --- */
 #define CC_LFO2_RATE        31  /* LFO2 rate 0.1-20Hz                  */
@@ -168,15 +170,16 @@
 #define CC_ENV_RELEASE      48  /* release 0=slow 127=fast             */
 #define CC_ENV_DEPTH        49  /* envelope -> DCO2 pitch depth        */
 #define CC_KEYTRACK_DEPTH   54  /* keytrack CV output scaling          */
+#define CC_KEYTRACK_SW      52  /* >= 64 key on, < 64 key off          */
 
 /* FV1 effects processor switch outputs - 0=low, 127=high */
-#define CC_FV1_SW_0     60
-#define CC_FV1_SW_1     61
-#define CC_FV1_SW_2     62
-#define CC_FV1_SW_3     63
-#define CC_FV1_SW_4     64
-#define CC_FV1_SW_5     66
-#define CC_FV1_SW_6     67
+#define CC_FV1_BANK_0     60
+#define CC_FV1_BANK_1     61
+#define CC_FV1_BANK_2     62
+#define CC_FV1_EFFECT_0     63
+#define CC_FV1_EFFECT_1     64
+#define CC_FV1_EFFECT_2     66
+#define CC_FV1_INTERNAL     67
 #define CC_ENV_DCO1_PWM     50  /* envelope -> DCO1 PWM depth          */
 #define CC_ENV_DCO2_PWM     51  /* envelope -> DCO2 PWM depth          */
 
