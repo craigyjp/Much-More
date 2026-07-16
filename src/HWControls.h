@@ -68,7 +68,12 @@
 #define LFO1_RETRIG_BUTTON 42
 #define NOISE_SRC_BUTTON 43
 #define FILTER_AT_BUTTON 44
-
+#define FX_BYPASS_BUTTON 45
+#define VCA_PUNCH_BUTTON 46
+#define VCF_PUNCH_BUTTON 47
+#define ENV1_PUNCH_BUTTON 48
+#define ENV2_3_ADSR_BUTTON 49
+#define ENV1_ADSR_BUTTON 50
 
 
 // Pins for MCP23017
@@ -107,9 +112,10 @@ Adafruit_MCP23017 mcp11;
 Adafruit_MCP23017 mcp12;
 Adafruit_MCP23017 mcp13;
 Adafruit_MCP23017 mcp14;
+Adafruit_MCP23017 mcp15;
 
 //Array of pointers of all MCPs
-Adafruit_MCP23017 *allMCPs[] = { &mcp1, &mcp2, &mcp3, &mcp4, &mcp5, &mcp6, &mcp7, &mcp8, &mcp9, &mcp10, &mcp11, &mcp12, &mcp13, &mcp14 };
+Adafruit_MCP23017 *allMCPs[] = { &mcp1, &mcp2, &mcp3, &mcp4, &mcp5, &mcp6, &mcp7, &mcp8, &mcp9, &mcp10, &mcp11, &mcp12, &mcp13, &mcp14, &mcp15 };
 
 /* Array of all rotary encoders and their pins */
 RotaryEncOverMCP rotaryEncoders[] = {
@@ -178,8 +184,13 @@ RotaryEncOverMCP rotaryEncoders[] = {
   RotaryEncOverMCP(&mcp14, 0, 1, &RotaryEncoderChanged, 52),
   RotaryEncOverMCP(&mcp14, 2, 3, &RotaryEncoderChanged, 53),
   RotaryEncOverMCP(&mcp14, 4, 5, &RotaryEncoderChanged, 54),
-  RotaryEncOverMCP(&mcp14, 8, 9, &RotaryEncoderChanged, 55),
+  RotaryEncOverMCP(&mcp14, 9, 8, &RotaryEncoderChanged, 57),
   RotaryEncOverMCP(&mcp2, 5, 4, &RotaryEncoderChanged, 56),
+
+  RotaryEncOverMCP(&mcp15, 1, 0, &RotaryEncoderChanged, 55),
+  RotaryEncOverMCP(&mcp2, 10, 9, &RotaryEncoderChanged, 58),
+
+  RotaryEncOverMCP(&mcp2, 12, 11, &RotaryEncoderChanged, 59),
 
 };
 
@@ -191,17 +202,17 @@ constexpr int numEncoders = (int)(sizeof(rotaryEncoders) / sizeof(*rotaryEncoder
 // an array of vectors to hold pointers to the encoders on each MCP
 std::vector<RotaryEncOverMCP *> encByMCP[NUM_MCP];
 
-Button arp_oct1_Button = Button(&mcp1, 0, ARP_OCT1_BUTTON, &mainButtonChanged);
-Button arp_oct2_Button = Button(&mcp1, 1, ARP_OCT2_BUTTON, &mainButtonChanged);
-Button arp_oct3_Button = Button(&mcp1, 3, ARP_OCT3_BUTTON, &mainButtonChanged);
-Button arp_oct4_Button = Button(&mcp1, 4, ARP_OCT4_BUTTON, &mainButtonChanged);
-Button arp_up_Button = Button(&mcp1, 8, ARP_UP_BUTTON, &mainButtonChanged);
-Button arp_down_Button = Button(&mcp1, 9, ARP_DOWN_BUTTON, &mainButtonChanged);
-Button arp_up_down_Button = Button(&mcp1, 10, ARP_UP_DOWN_BUTTON, &mainButtonChanged);
-Button arp_rand_Button = Button(&mcp1, 11, ARP_RAND_BUTTON, &mainButtonChanged);
+Button arp_oct1_Button = Button(&mcp1, 3, ARP_OCT1_BUTTON, &mainButtonChanged);
+Button arp_oct2_Button = Button(&mcp1, 2, ARP_OCT2_BUTTON, &mainButtonChanged);
+Button arp_oct3_Button = Button(&mcp1, 1, ARP_OCT3_BUTTON, &mainButtonChanged);
+Button arp_oct4_Button = Button(&mcp1, 0, ARP_OCT4_BUTTON, &mainButtonChanged);
+Button arp_up_Button = Button(&mcp1, 11, ARP_UP_BUTTON, &mainButtonChanged);
+Button arp_down_Button = Button(&mcp1, 10, ARP_DOWN_BUTTON, &mainButtonChanged);
+Button arp_up_down_Button = Button(&mcp1, 9, ARP_UP_DOWN_BUTTON, &mainButtonChanged);
+Button arp_rand_Button = Button(&mcp1, 8, ARP_RAND_BUTTON, &mainButtonChanged);
 
-Button arp_start_stop_Button = Button(&mcp2, 0, ARP_START_STOP_BUTTON, &mainButtonChanged);
-Button arp_latch_Button = Button(&mcp2, 1, ARP_LATCH_BUTTON, &mainButtonChanged);
+Button arp_start_stop_Button = Button(&mcp2, 1, ARP_START_STOP_BUTTON, &mainButtonChanged);
+Button arp_latch_Button = Button(&mcp2, 0, ARP_LATCH_BUTTON, &mainButtonChanged);
 Button filter_at_Button = Button(&mcp2, 8, FILTER_AT_BUTTON, &mainButtonChanged);
 
 Button mode_Button = Button(&mcp3, 0, MODE_BUTTON, &mainButtonChanged);
@@ -241,6 +252,7 @@ Button amp_lin_log_Button = Button(&mcp12, 6, AMP_LIN_LOG_BUTTON, &mainButtonCha
 Button lfo1_wave_Button = Button(&mcp13, 2, LFO1_WAVE_BUTTON, &mainButtonChanged);
 Button lfo2_wave_Button = Button(&mcp13, 5, LFO2_WAVE_BUTTON, &mainButtonChanged);
 Button amp_env_gate_Button = Button(&mcp13, 8, AMP_ENV_GATE_BUTTON, &mainButtonChanged);
+Button vca_env_punch_Button = Button(&mcp13, 10, VCA_PUNCH_BUTTON, &mainButtonChanged);
 Button lfo3_retrig_Button = Button(&mcp13, 11, LFO3_RETRIG_BUTTON, &mainButtonChanged);
 Button lfo3_mult_Button = Button(&mcp13, 13, LFO3_MULT_BUTTON, &mainButtonChanged);
 
@@ -249,6 +261,11 @@ Button effect_num_Button = Button(&mcp14, 10, EFFECT_NUM_BUTTON, &mainButtonChan
 Button effect_bank_Button = Button(&mcp14, 11, EFFECT_BANK_BUTTON, &mainButtonChanged);
 Button effect_rotary_Button = Button(&mcp14, 13, EFFECT_ROTARY_BUTTON, &mainButtonChanged);
 
+Button env1_punch_Button = Button(&mcp15, 4, ENV1_PUNCH_BUTTON, &mainButtonChanged);
+Button vcf_env_punch_Button = Button(&mcp15, 6, VCF_PUNCH_BUTTON, &mainButtonChanged);
+Button env2_3_adsr_Button = Button(&mcp15, 8, ENV2_3_ADSR_BUTTON, &mainButtonChanged);
+Button env1_adsr_Button = Button(&mcp15, 11, ENV1_ADSR_BUTTON, &mainButtonChanged);
+Button fx_bypass_Button = Button(&mcp15, 14, FX_BYPASS_BUTTON, &mainButtonChanged);
 
 
 Button *mainButtons[] = {
@@ -297,6 +314,12 @@ Button *mainButtons[] = {
   &lfo1_retrig_Button,
   &noise_src_Button,
   &filter_at_Button,
+  &fx_bypass_Button,
+  &env1_punch_Button,
+  &vcf_env_punch_Button,
+  &vca_env_punch_Button,
+  &env1_adsr_Button,
+  &env2_3_adsr_Button,
 };
 
 Button *allButtons[] = {
@@ -345,23 +368,30 @@ Button *allButtons[] = {
   &lfo1_retrig_Button,
   &noise_src_Button,
   &filter_at_Button,
+  &fx_bypass_Button,
+  &env1_punch_Button,
+  &vcf_env_punch_Button,
+  &vca_env_punch_Button,
+  &env1_adsr_Button,
+  &env2_3_adsr_Button,
 };
 
 // MCP LEDS
 // GP1
-#define ARP_OCT1_LED 4
-#define ARP_OCT2_LED 5
-#define ARP_OCT3_LED 6
-#define ARP_OCT4_LED 7
+#define ARP_OCT4_LED 4
+#define ARP_OCT3_LED 5
+#define ARP_OCT2_LED 6
+#define ARP_OCT1_LED 7
 
-#define ARP_UP_LED 12
-#define ARP_DOWN_LED 13
-#define ARP_UP_DOWN_LED 14
-#define ARP_RAND_LED 15
+#define ARP_RAND_LED 12
+#define ARP_UP_DOWN_LED 13
+#define ARP_DOWN_LED 14
+#define ARP_UP_LED 15
 
 // GP2
-#define ARP_START_STOP_LED 6
-#define ARP_LATCH_LED 7
+#define ARP_LATCH_LED 6
+#define ARP_START_STOP_LED 7
+
 
 // GP3
 #define LOWER_LED 4
@@ -432,8 +462,18 @@ Button *allButtons[] = {
 
 // GP14
 #define LFO1_RETRIG_LED 7
+#define VCA_ENV_PUNCH_LED 12
 #define EFFECT_ROTARY_LED_RED 14
 #define EFFECT_ROTARY_LED_GREEN 15
+
+//GP15
+#define ENV1_PUNCH_LED 5
+#define VCF_PUNCH_LED 7
+#define ENV2_3_ADSR_LED_RED 9
+#define ENV2_3_ADSR_LED_GREEN 10
+#define ENV1_ADSR_LED_RED 12
+#define ENV1_ADSR_LED_GREEN 13
+#define FX_BYPASS_LED 15
 
 
 //Note DAC
@@ -545,6 +585,15 @@ void setupHardware() {
   mcp13.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X   
 
   mcp14.pinMode(7, OUTPUT);   // pin 7 = GPA7 of MCP2301X
-  mcp14.pinMode(14, OUTPUT);   // pin 7 = GPA7 of MCP2301X
-  mcp14.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X     
+  mcp14.pinMode(12, OUTPUT);   // pin 12 = GPA7 of MCP2301X
+  mcp14.pinMode(14, OUTPUT);   // pin 14 = GPA7 of MCP2301X
+  mcp14.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X   
+
+  mcp15.pinMode(5, OUTPUT);  // pin 5 = GPB7 of MCP2301X
+  mcp15.pinMode(7, OUTPUT);  // pin 7 = GPB7 of MCP2301X
+  mcp15.pinMode(9, OUTPUT);  // pin 9 = GPB7 of MCP2301X
+  mcp15.pinMode(10, OUTPUT);  // pin 10 = GPB7 of MCP2301X
+  mcp15.pinMode(12, OUTPUT);  // pin 12 = GPB7 of MCP2301X
+  mcp15.pinMode(13, OUTPUT);  // pin 13 = GPB7 of MCP2301X  
+  mcp15.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X    
 }

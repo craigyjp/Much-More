@@ -3,6 +3,7 @@
 #define   CCmodwheel  1 //pitch LFO amount - less from mod wheel
 #define   CCLfoDepth  3 //pitch LFO amount - panel control
 
+#define   CCfx_Bypass 4
 #define   CCglideTime 5
 #define   CCdco_at_SW 6
 #define   CCvolumeControl 7
@@ -96,14 +97,20 @@
 #define   CCupperSW 97
 #define   CClowerSW 98
 
+#define   CCvcfATDepth 101
 #define   CCosc2PulseLevel 102
 #define   CCosc2SawLevel 103
 #define   CCeffectparam3 104
-
 #define   CCpitchRelease 105
 #define   CCpitchAttack 106
 #define   CCpitchSustain 107
 #define   CCpitchDecay 108
+#define   CCenv2_punch 109
+#define   CCenv3_punch 110
+#define   CCenv1_punch 111
+#define   CCenv2_env3_adsr 112
+#define   CCdualDetune 113
+#define   CCunisonDetune 114
 
 #define   CCallnotesoff 123//Panic button
 
@@ -138,17 +145,16 @@
 #define CC_NOTES_HELD       58  /* >= 64 notes held, < 64 all released */
 #define CC_AT_FM_DEPTH      28  /* aftertouch -> vibrato depth         */
 #define CC_MW_FM_DEPTH      29  /* mod wheel -> FM depth               */
-#define CC_ADC_FM_DEPTH     30  /* ADC FM input depth                  */
-#define CC_XMOD_DEPTH       53  /* X-MOD depth DCO2->DCO1 freq         */
 #define CC_AT_FM_ENABLE     68  /* aftertouch -> DCO FM on/off (>=64)  */
 #define CC_AT_FILTER_ENABLE 69  /* aftertouch -> filter CV on/off      */
+#define CC_AT_VCF_DEPTH     70  /* aftertouch -> filter CV depth       */
+#define CC_GATE_ENABLE      59  /* <64 gate on (ADSR), >=64 gate off (ADR) */
 
 /* --- LFO2 (PWM) --- */
 #define CC_LFO2_RATE        31  /* LFO2 rate 0.1-20Hz                  */
 #define CC_LFO2_WAVEFORM    32  /* LFO2 waveform tri/sq/saw            */
 #define CC_DCO1_LFO2_PWM    33  /* LFO2 -> DCO1 PWM depth              */
 #define CC_DCO2_LFO2_PWM    34  /* LFO2 -> DCO2 PWM depth              */
-#define CC_DCO1_ADC_PWM     35  /* DCO1 ADC PWM input depth            */
 
 /* --- DCO2 oscillator --- */
 #define CC_DCO2_SAW_LEVEL   36  /* DCO2 sawtooth level                 */
@@ -156,7 +162,6 @@
 #define CC_DCO2_PULSE_LEVEL 38  /* DCO2 pulse level                    */
 #define CC_DCO2_SUB_LEVEL   39  /* DCO2 sub level                      */
 #define CC_DCO2_PWM_DEPTH   40  /* DCO2 mod wheel PWM depth            */
-#define CC_DCO2_ADC_PWM     41  /* DCO2 ADC PWM input depth            */
 #define CC_DCO2_DETUNE      42  /* DCO2 detune cents, centre=64        */
 #define CC_DCO2_INTERVAL    43  /* DCO2 interval semitones, centre=64  */
 
@@ -171,7 +176,9 @@
 #define CC_ENV_DEPTH        49  /* envelope -> DCO2 pitch depth        */
 #define CC_KEYTRACK_DEPTH   54  /* keytrack CV output scaling          */
 #define CC_KEYTRACK_SW      52  /* >= 64 key on, < 64 key off          */
-
+#define CC_VOICE_DETUNE     53  /* master detune both DCOs, centre=64  */
+#define CC_UNISON_MODE      30  /* unison on/off (>=64=on)             */
+#define CC_UNISON_DETUNE    35  /* unison detune spread, 0 = none      */
 /* FV1 effects processor switch outputs - 0=low, 127=high */
 #define CC_FV1_BANK_0     60
 #define CC_FV1_BANK_1     61
@@ -210,7 +217,7 @@
 #define VB_LFO3_RATE 21
 #define VB_LFO3_WAVE 22
 #define VB_VOLUME 23
-// 24
+#define VB_EFFECT_POT4 24
 
 // Switches CC number
 
@@ -226,8 +233,8 @@
 #define VB_NOISE_SOURCE 72
 #define VB_AMP_LOOP_BIT1 73
 #define VB_AMP_LOOP_BIT0 74
-// 75
-// 76
+#define VB_VCF_ENV_PUNCH 75
+#define VB_AMP_ENV_PUNCH 76
 // 77
 // 78
 // 79

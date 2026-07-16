@@ -693,6 +693,14 @@ void showSettingsPage(const char *option, const char *value, int settingsPart) {
 
 void refreshScreen() {
 
+    // If a previous async DMA push is still in flight, let it complete
+    // before we draw the next frame into the shared framebuffer.
+    // (In the loop() hot path this is already guarded, so it's a no-op
+    //  there; it protects the inline callers in checkEncoder/checkSwitches.)
+    if (tft.asyncUpdateActive()) {
+      tft.waitUpdateAsyncComplete();
+    }
+
     switch (state) {
       case PARAMETER:
         if ((millis() - timer) > DISPLAYTIMEOUT) {
@@ -743,7 +751,7 @@ void refreshScreen() {
         // Handled inside checkSwitches() (already shows a message & delay)
         break;
     }
-    tft.updateScreen();
+    tft.updateScreenAsync();
 }
 
 // void displayThread() {

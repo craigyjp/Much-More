@@ -97,6 +97,49 @@ int orderIndxWhole = 0, orderIndxLower = 0, orderIndxUpper = 0;
 int voiceAssignmentLower[128];
 int voiceAssignmentUpper[128];
 
+// ============================== ARPEGGIATOR ==============================
+// New parameter slots (kept here so the sketch compiles even if they are
+// not yet added to Parameters.h; move them there if you prefer).
+#ifndef P_arpStartStop
+#define P_arpStartStop 90
+#define P_arpLatch 91
+#define P_arpRange 92
+#define P_arpMode 93
+#endif
+
+// arp mode values (match the values your mode buttons write into P_arpMode)
+enum ArpMode { ARP_OFF = 0,
+               ARP_UP = 1,
+               ARP_DOWN = 2,
+               ARP_UPDOWN = 3,
+               ARP_RANDOM = 4 };
+
+// JP-8 behaviour: in SPLIT the arp runs on the lower section only
+const bool arpLowerOnlyWhenSplit = true;
+
+uint8_t arpPattern[12];  // held notes, in the order pressed
+uint8_t arpLen = 0;      // how many notes are in the pattern
+int16_t arpPos = -1;     // current step in the unfolded (octave) sequence
+int8_t arpDir = +1;      // +1/-1 for Up-Down
+uint8_t arpCurrentNote = 0;
+uint8_t arpCurrentVel = 100;
+bool arpNoteActive = false;
+
+bool keyDownArp[128] = { false };      // physically held (within arp scope)
+bool holdLatchedArp[128] = { false };  // kept by latch after release
+
+// internal smoothed clock
+float arpHzTarget = 1.0f;
+float arpHzSmooth = 1.0f;
+uint32_t arpLastSmoothUs = 0;
+uint32_t arpNextStepUs = 0;
+// =========================================================================
+
+// ---- Parameter-display throttling (keeps TFT redraws off the arp clock) ----
+bool paramDisplayDirty = false;
+unsigned long lastParamDrawTime = 0;
+const unsigned long paramDrawInterval = 45;  // ms; min spacing between param redraws
+
 CircularBuffer<Performance, PERFORMANCES_LIMIT> performances;
 Performance currentPerformance;
 
@@ -170,6 +213,8 @@ void setup() {
   mcp13.begin(4, Wire1);
   delay(10);
   mcp14.begin(5, Wire1);
+  delay(10);
+  mcp15.begin(6, Wire1);
 
   //groupEncoders();
   initRotaryEncoders();
@@ -189,6 +234,16 @@ void setup() {
     voiceToNoteLower[i] = -1;
     voiceToNoteUpper[i] = -1;
   }
+
+  // Arpeggiator init
+  for (int i = 0; i < 128; i++) {
+    keyDownArp[i] = false;
+    holdLatchedArp[i] = false;
+  }
+  arpClearPattern();
+  if (lowerData[P_arpRange] < 1 || lowerData[P_arpRange] > 4) lowerData[P_arpRange] = 1;
+  arpHzTarget = LFOTEMPO[constrain(lowerData[P_arpRate], 0, 127)];
+  arpHzSmooth = arpHzTarget;
 
 
   cardStatus = SD.begin(BUILTIN_SDCARD);
@@ -286,13 +341,13 @@ void setup() {
 
   for (int i = 0; i < 6; i++) {
     int noteon = 60;
-    MIDI7.sendNoteOn(noteon, 64, i +1);
+    MIDI7.sendNoteOn(noteon, 64, i + 1);
     delay(1);
-    MIDI7.sendNoteOff(noteon, 64, i +1);
+    MIDI7.sendNoteOff(noteon, 64, i + 1);
     delay(5);
-    MIDI8.sendNoteOn(noteon, 64, i +1);
+    MIDI8.sendNoteOn(noteon, 64, i + 1);
     delay(1);
-    MIDI8.sendNoteOff(noteon, 64, i +1);
+    MIDI8.sendNoteOff(noteon, 64, i + 1);
   }
   delay(200);
 
@@ -304,15 +359,6 @@ void setup() {
   updateplayMode(0);
   recallPatch(patchNoL);  //Load first patch
   refreshScreen();
-
-  // midiCCOut79(CC_FV1_BANK_0, 127); // eeprom 1
-  // midiCCOut79(CC_FV1_BANK_1, 127); // eeprom 2 
-  // midiCCOut79(CC_FV1_BANK_2, 127); // eeprom 3 
-  // midiCCOut79(CC_FV1_EFFECT_0, 0);
-  // midiCCOut79(CC_FV1_EFFECT_1, 0);
-  // midiCCOut79(CC_FV1_EFFECT_2, 0);
-  // midiCCOut79(CC_FV1_INTERNAL, 0); // internal-external
-
 }
 
 void pollAllMCPs() {
@@ -383,9 +429,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
   if (!clockwise) {
     speed = -speed;
   }
-
-  // Serial.print("Encode ID ");
-  // Serial.println(id);
 
   switch (id) {
 
@@ -602,18 +645,13 @@ void RotaryEncoderChanged(bool clockwise, int id) {
       break;
 
     case 14:
-      if (!clockwise) {
-        speed = -1;
-      } else {
-        speed = +1;
-      }
       if (upperSW) {
         upperData[P_osc2Interval] = (upperData[P_osc2Interval] + speed);
-        upperData[P_osc2Interval] = constrain(upperData[P_osc2Interval], 0, 12);
+        upperData[P_osc2Interval] = constrain(upperData[P_osc2Interval], 0, 127);
         osc2Intervalstr = upperData[P_osc2Interval];
       } else {
         lowerData[P_osc2Interval] = (lowerData[P_osc2Interval] + speed);
-        lowerData[P_osc2Interval] = constrain(lowerData[P_osc2Interval], 0, 12);
+        lowerData[P_osc2Interval] = constrain(lowerData[P_osc2Interval], 0, 127);
         osc2Intervalstr = lowerData[P_osc2Interval];
         if (wholemode) {
           upperData[P_osc2Interval] = lowerData[P_osc2Interval];
@@ -1298,23 +1336,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
 
     case 54:
       if (upperSW) {
-        upperData[P_effectPot3] = (upperData[P_effectPot3] + speed);
-        upperData[P_effectPot3] = constrain(upperData[P_effectPot3], 0, 127);
-        effectPot3str = upperData[P_effectPot3];
-      } else {
-        lowerData[P_effectPot3] = (lowerData[P_effectPot3] + speed);
-        lowerData[P_effectPot3] = constrain(lowerData[P_effectPot3], 0, 127);
-        effectPot3str = lowerData[P_effectPot3];
-        if (wholemode) {
-          upperData[P_effectPot3] = lowerData[P_effectPot3];
-        }
-      }
-
-      updateeffectPot3(1);
-      break;
-
-    case 55:
-      if (upperSW) {
         upperData[P_effectsMix] = (upperData[P_effectsMix] + speed);
         upperData[P_effectsMix] = constrain(upperData[P_effectsMix], 0, 127);
         effectsMixstr = LINEARCENTREZERO[upperData[P_effectsMix]];
@@ -1328,6 +1349,23 @@ void RotaryEncoderChanged(bool clockwise, int id) {
       }
 
       updateeffectsMix(1);
+      break;
+
+    case 55:
+      if (upperSW) {
+        upperData[P_effectPot3] = (upperData[P_effectPot3] + speed);
+        upperData[P_effectPot3] = constrain(upperData[P_effectPot3], 0, 127);
+        effectPot3str = upperData[P_effectPot3];
+      } else {
+        lowerData[P_effectPot3] = (lowerData[P_effectPot3] + speed);
+        lowerData[P_effectPot3] = constrain(lowerData[P_effectPot3], 0, 127);
+        effectPot3str = lowerData[P_effectPot3];
+        if (wholemode) {
+          upperData[P_effectPot3] = lowerData[P_effectPot3];
+        }
+      }
+
+      updateeffectPot3(1);
       break;
 
     case 56:
@@ -1346,6 +1384,47 @@ void RotaryEncoderChanged(bool clockwise, int id) {
 
       updateOsc2EnvDepth(1);
       break;
+
+
+    case 57:
+      if (upperSW) {
+        upperData[P_vcfATDepth] = (upperData[P_vcfATDepth] + speed);
+        upperData[P_vcfATDepth] = constrain(upperData[P_vcfATDepth], 0, 127);
+        vcfATDepthstr = upperData[P_vcfATDepth];
+      } else {
+        lowerData[P_vcfATDepth] = (lowerData[P_vcfATDepth] + speed);
+        lowerData[P_vcfATDepth] = constrain(lowerData[P_vcfATDepth], 0, 127);
+        vcfATDepthstr = lowerData[P_vcfATDepth];
+        if (wholemode) {
+          upperData[P_vcfATDepth] = lowerData[P_vcfATDepth];
+        }
+      }
+
+      updatevcfATDepth(1);
+      break;
+
+    case 58:
+      if (upperSW) {
+        upperData[P_unisonDetune] = (upperData[P_unisonDetune] + speed);
+        upperData[P_unisonDetune] = constrain(upperData[P_unisonDetune], 0, 127);
+        unisonDetunestr = upperData[P_unisonDetune];
+      } else {
+        lowerData[P_unisonDetune] = (lowerData[P_unisonDetune] + speed);
+        lowerData[P_unisonDetune] = constrain(lowerData[P_unisonDetune], 0, 127);
+        unisonDetunestr = lowerData[P_unisonDetune];
+        if (wholemode) {
+          upperData[P_unisonDetune] = lowerData[P_unisonDetune];
+        }
+      }
+
+      updateunisonDetune(1);
+      break;
+
+    case 59:
+      upperData[P_dualDetune] = (upperData[P_dualDetune] + speed);
+      upperData[P_dualDetune] = constrain(upperData[P_dualDetune], 0, 127);
+      updatedualDetune(1);
+      break;
   }
 
   //rotaryEncoderChanged(id, clockwise, speed);
@@ -1354,6 +1433,103 @@ void RotaryEncoderChanged(bool clockwise, int id) {
 void mainButtonChanged(Button *btn, bool released) {
 
   switch (btn->id) {
+
+    // ----------------------------- ARPEGGIATOR -----------------------------
+    case ARP_START_STOP_BUTTON:
+      if (!released) {
+        lowerData[P_arpStartStop] = !lowerData[P_arpStartStop];
+        if (lowerData[P_arpStartStop]) {
+          if (lowerData[P_arpMode] == ARP_OFF) lowerData[P_arpMode] = ARP_UP;  // default pattern
+          arpStartTransport();
+        } else {
+          arpAllOff();
+        }
+        arpMsg(lowerData[P_arpStartStop] ? "Running" : "Stopped");
+        updateArpLEDs();
+      }
+      break;
+
+    case ARP_LATCH_BUTTON:
+      if (!released) {
+        lowerData[P_arpLatch] = !lowerData[P_arpLatch];
+        if (!lowerData[P_arpLatch]) {
+          // dropping latch: let go of anything not still physically held
+          for (int i = 0; i < 128; i++) {
+            if (holdLatchedArp[i] && !keyDownArp[i]) arpRemoveNote((byte)i);
+            holdLatchedArp[i] = false;
+          }
+        }
+        arpMsg(lowerData[P_arpLatch] ? "Latch On" : "Latch Off");
+        updateArpLEDs();
+      }
+      break;
+
+    case ARP_OCT1_BUTTON:
+      if (!released) {
+        lowerData[P_arpRange] = 1;
+        if (arpPos >= arpUnfoldedLength()) arpPos = -1;
+        arpMsg("Range 1 Octave");
+        updateArpLEDs();
+      }
+      break;
+    case ARP_OCT2_BUTTON:
+      if (!released) {
+        lowerData[P_arpRange] = 2;
+        if (arpPos >= arpUnfoldedLength()) arpPos = -1;
+        arpMsg("Range 2 Octaves");
+        updateArpLEDs();
+      }
+      break;
+    case ARP_OCT3_BUTTON:
+      if (!released) {
+        lowerData[P_arpRange] = 3;
+        if (arpPos >= arpUnfoldedLength()) arpPos = -1;
+        arpMsg("Range 3 Octaves");
+        updateArpLEDs();
+      }
+      break;
+    case ARP_OCT4_BUTTON:
+      if (!released) {
+        lowerData[P_arpRange] = 4;
+        if (arpPos >= arpUnfoldedLength()) arpPos = -1;
+        arpMsg("Range 4 Octaves");
+        updateArpLEDs();
+      }
+      break;
+
+    case ARP_UP_BUTTON:
+      if (!released) {
+        lowerData[P_arpMode] = ARP_UP;
+        arpRestart();
+        arpMsg("Mode Up");
+        updateArpLEDs();
+      }
+      break;
+    case ARP_DOWN_BUTTON:
+      if (!released) {
+        lowerData[P_arpMode] = ARP_DOWN;
+        arpRestart();
+        arpMsg("Mode Down");
+        updateArpLEDs();
+      }
+      break;
+    case ARP_UP_DOWN_BUTTON:
+      if (!released) {
+        lowerData[P_arpMode] = ARP_UPDOWN;
+        arpRestart();
+        arpMsg("Mode Up/Down");
+        updateArpLEDs();
+      }
+      break;
+    case ARP_RAND_BUTTON:
+      if (!released) {
+        lowerData[P_arpMode] = ARP_RANDOM;
+        arpRestart();
+        arpMsg("Mode Random");
+        updateArpLEDs();
+      }
+      break;
+      // ---------------------------------------------------------------------
 
     case LFO3_RETRIG_BUTTON:
       if (!released) {
@@ -1367,7 +1543,7 @@ void mainButtonChanged(Button *btn, bool released) {
         panelData[P_lfo1retrig] = !panelData[P_lfo1retrig];
         myControlChange(midiChannel, CClfo1retrig, panelData[P_lfo1retrig]);
       }
-      break;    
+      break;
 
       // if (btnIndex == CHORD_HOLD_SW && btnType == ROX_PRESSED) {
       //   chordHoldSW = !chordHoldSW;
@@ -1494,6 +1670,27 @@ void mainButtonChanged(Button *btn, bool released) {
       }
       break;
 
+    case VCA_PUNCH_BUTTON:
+      if (!released) {
+        panelData[P_env3_punch] = !panelData[P_env3_punch];
+        myControlChange(midiChannel, CCenv3_punch, panelData[P_env3_punch]);
+      }
+      break;
+
+    case ENV2_3_ADSR_BUTTON:
+      if (!released) {
+        panelData[P_env2_env3_adsr] = !panelData[P_env2_env3_adsr];
+        myControlChange(midiChannel, CCenv2_env3_adsr, panelData[P_env2_env3_adsr]);
+      }
+      break;
+
+    case VCF_PUNCH_BUTTON:
+      if (!released) {
+        panelData[P_env2_punch] = !panelData[P_env2_punch];
+        myControlChange(midiChannel, CCenv2_punch, panelData[P_env2_punch]);
+      }
+      break;
+
     case AMP_VELOCITY_BUTTON:
       if (!released) {
         panelData[P_vcaVel] = !panelData[P_vcaVel];
@@ -1538,6 +1735,13 @@ void mainButtonChanged(Button *btn, bool released) {
           panelData[P_effectBank] = 0;
         }
         myControlChange(midiChannel, CCeffectBankSW, panelData[P_effectBank]);
+      }
+      break;
+
+    case FX_BYPASS_BUTTON:
+      if (!released) {
+        panelData[P_fx_Bypass] = !panelData[P_fx_Bypass];
+        myControlChange(midiChannel, CCfx_Bypass, panelData[P_fx_Bypass]);
       }
       break;
 
@@ -2040,12 +2244,384 @@ void onHoldButtonReleased() {
   //Serial.println("Chord Hold: OFF");
 }
 
+// ============================== ARP ENGINE ==============================
+
+inline bool arpActive() {
+  return (lowerData[P_arpStartStop] != 0) && (lowerData[P_arpMode] != ARP_OFF);
+}
+
+inline uint8_t arpRangeVal() {
+  int r = lowerData[P_arpRange];
+  if (r < 1) r = 1;
+  if (r > 4) r = 4;
+  return (uint8_t)r;
+}
+
+// Does this note belong to the arp, given the current play mode?
+inline bool arpInScope(byte note) {
+  if (playMode == 2 && arpLowerOnlyWhenSplit) return (note < splitPoint);
+  return true;  // Whole & Dual: whole keyboard
+}
+
+inline bool anyArpKeyDown() {
+  for (int i = 0; i < 128; i++)
+    if (keyDownArp[i]) return true;
+  return false;
+}
+
+bool arpPatternContains(uint8_t n) {
+  for (uint8_t i = 0; i < arpLen; i++)
+    if (arpPattern[i] == n) return true;
+  return false;
+}
+
+void arpClearPattern() {
+  arpLen = 0;
+  arpPos = -1;
+  arpDir = +1;
+}
+
+void arpAddNote(uint8_t n) {
+  if (arpLen >= 12) return;
+  if (arpPatternContains(n)) return;
+  arpPattern[arpLen++] = n;
+  if (arpLen == 1) {  // first note: start the sequence cleanly
+    arpPos = -1;
+    arpDir = +1;
+  }
+}
+
+void arpRemoveNote(uint8_t n) {
+  for (uint8_t i = 0; i < arpLen; i++) {
+    if (arpPattern[i] == n) {
+      for (uint8_t j = i; j + 1 < arpLen; j++) arpPattern[j] = arpPattern[j + 1];
+      arpLen--;
+      if (arpLen == 0) {
+        arpPos = -1;
+        arpDir = +1;
+      } else {
+        int16_t L = (int16_t)arpLen * (int16_t)arpRangeVal();
+        if (arpPos >= L) arpPos = -1;
+      }
+      return;
+    }
+  }
+}
+
+inline int16_t arpUnfoldedLength() {
+  return (int16_t)arpLen * (int16_t)arpRangeVal();
+}
+
+inline uint8_t arpUnfoldedNoteAt(int16_t p) {
+  uint8_t idx = (uint8_t)(p % arpLen);
+  uint8_t oct = (uint8_t)(p / arpLen);
+  int16_t n = (int16_t)arpPattern[idx] + (int16_t)(12 * oct);
+  if (n < 0) n = 0;
+  if (n > 127) n = 127;
+  return (uint8_t)n;
+}
+
+int16_t arpNextPos(int16_t L) {
+  if (L <= 1) return 0;
+  switch (lowerData[P_arpMode]) {
+    case ARP_UP:
+      return (int16_t)((arpPos + 1) % L);
+    case ARP_DOWN:
+      return (arpPos <= 0) ? (L - 1) : (arpPos - 1);
+    case ARP_UPDOWN:
+      {
+        int16_t np = arpPos + arpDir;
+        if (np >= L) {
+          arpDir = -1;
+          np = L - 2;
+        }
+        if (np < 0) {
+          arpDir = +1;
+          np = 1;
+        }
+        return np;
+      }
+    case ARP_RANDOM:
+      return (int16_t)(random(L));
+    default:
+      return arpPos;
+  }
+}
+
+// Release the currently sounding arp note (if any), on the correct voice/board
+void arpStopCurrent() {
+  if (!arpNoteActive) return;
+  byte note = arpCurrentNote;
+
+  if (playMode == 2 && arpLowerOnlyWhenSplit) {
+    // SPLIT: lower only
+    if (lowerData[P_keyboardMode] == 2) {
+      commandMonoNoteOffLower(note);
+    } else if (lowerData[P_keyboardMode] == 3) {
+      commandUnisonNoteOffLower(note);
+    } else {
+      int v = voiceAssignmentLower[note];
+      if (v >= 0 && v <= 5) releaseVoice(note, v);
+    }
+  } else if (playMode == 1) {
+    // DUAL: both engines
+    if (lowerData[P_keyboardMode] == 2) commandMonoNoteOffLower(note);
+    else if (lowerData[P_keyboardMode] == 3) commandUnisonNoteOffLower(note);
+    else {
+      int vl = voiceAssignmentLower[note];
+      if (vl >= 0 && vl <= 5) releaseVoice(note, vl);
+    }
+
+    if (upperData[P_keyboardMode] == 2) commandMonoNoteOffUpper(note);
+    else if (upperData[P_keyboardMode] == 3) commandUnisonNoteOffUpper(note);
+    else {
+      int vu = voiceAssignmentUpper[note];
+      if (vu >= 6 && vu <= 11) releaseVoice(note, vu);
+    }
+  } else {
+    // WHOLE
+    if (lowerData[P_keyboardMode] == 2) {
+      commandMonoNoteOff(note);
+    } else if (lowerData[P_keyboardMode] == 3) {
+      commandUnisonNoteOff(note);
+    } else {
+      for (int v = 0; v < 12; v++) {
+        if (voices[v].noteOn && voices[v].note == note) releaseVoice(note, v);
+      }
+    }
+  }
+  arpNoteActive = false;
+}
+
+// Play one arp note, using the existing voice-allocation rules
+void arpPlayNote(uint8_t note, uint8_t vel) {
+
+  // SPLIT: lower only
+  if (playMode == 2 && arpLowerOnlyWhenSplit) {
+    switch (lowerData[P_keyboardMode]) {
+      case 0:
+        {
+          int v = getLowerSplitVoice(note);
+          assignVoice(note, vel, v);
+          voiceAssignmentLower[note] = v;
+          voiceToNoteLower[v] = note;
+        }
+        break;
+      case 1:
+        {
+          int v = getLowerSplitVoicePoly2(note);
+          int old = voiceToNoteLower[v];
+          if (old >= 0) {
+            releaseVoice(old, v);
+            voiceAssignmentLower[old] = -1;
+          }
+          assignVoice(note, vel, v);
+          voiceAssignmentLower[note] = v;
+          voiceToNoteLower[v] = note;
+        }
+        break;
+      case 2: commandMonoNoteOnLower(note, vel, lowerData[P_NotePriority]); break;
+      case 3: commandUnisonNoteOnLower(note, vel, lowerData[P_NotePriority]); break;
+    }
+    return;
+  }
+
+  // DUAL: drive both lower and upper
+  if (playMode == 1) {
+    // Lower
+    if (lowerData[P_keyboardMode] == 1) {
+      int v = getLowerSplitVoicePoly2(note);
+      int old = voiceToNoteLower[v];
+      if (old >= 0) {
+        releaseVoice(old, v);
+        voiceAssignmentLower[old] = -1;
+      }
+      assignVoice(note, vel, v);
+      voiceAssignmentLower[note] = v;
+      voiceToNoteLower[v] = note;
+    } else if (lowerData[P_keyboardMode] == 0) {
+      int v = getLowerSplitVoice(note);
+      assignVoice(note, vel, v);
+      voiceAssignmentLower[note] = v;
+      voiceToNoteLower[v] = note;
+    } else if (lowerData[P_keyboardMode] == 2) {
+      commandMonoNoteOnLower(note, vel, lowerData[P_NotePriority]);
+    } else if (lowerData[P_keyboardMode] == 3) {
+      commandUnisonNoteOnLower(note, vel, lowerData[P_NotePriority]);
+    }
+    // Upper
+    if (upperData[P_keyboardMode] == 1) {
+      int v = getUpperSplitVoicePoly2(note);
+      int old = voiceToNoteUpper[v - 6];
+      if (old >= 0) {
+        releaseVoice(old, v);
+        voiceAssignmentUpper[old] = -1;
+      }
+      assignVoice(note, vel, v);
+      voiceAssignmentUpper[note] = v;
+      voiceToNoteUpper[v - 6] = note;
+    } else if (upperData[P_keyboardMode] == 0) {
+      int v = getUpperSplitVoice(note);
+      assignVoice(note, vel, v);
+      voiceAssignmentUpper[note] = v;
+      voiceToNoteUpper[v - 6] = note;
+    } else if (upperData[P_keyboardMode] == 2) {
+      commandMonoNoteOnUpper(note, vel, upperData[P_NotePriority]);
+    } else if (upperData[P_keyboardMode] == 3) {
+      commandUnisonNoteOnUpper(note, vel, upperData[P_NotePriority]);
+    }
+    return;
+  }
+
+  // WHOLE
+  if (playMode == 0) {
+    int voiceNum = -1;
+    switch (lowerData[P_keyboardMode]) {
+      case 0:
+        voiceNum = getVoiceNo(-1) - 1;
+        assignVoice(note, vel, voiceNum);
+        voiceAssignment[note] = voiceNum;
+        break;
+      case 1:
+        voiceNum = getVoiceNoPoly2(-1) - 1;
+        assignVoice(note, vel, voiceNum);
+        voiceAssignment[note] = voiceNum;
+        break;
+      case 2: commandMonoNoteOn(note, vel); break;
+      case 3: commandUnisonNoteOn(note, vel); break;
+    }
+    return;
+  }
+}
+
+// Smooth the step rate so turning the Arp Rate knob doesn't zipper
+inline void arpUpdateSmoothHz() {
+  uint32_t now = micros();
+  if (arpLastSmoothUs == 0) {
+    arpLastSmoothUs = now;
+    arpHzSmooth = arpHzTarget;
+    return;
+  }
+  float dt = (now - arpLastSmoothUs) * 1e-6f;
+  arpLastSmoothUs = now;
+  const float tau = 0.20f;  // larger = smoother/slower response
+  float a = dt / (tau + dt);
+  arpHzSmooth += (arpHzTarget - arpHzSmooth) * a;
+  if (arpHzSmooth < 0.02f) arpHzSmooth = 0.02f;
+  if (arpHzSmooth > 20.0f) arpHzSmooth = 20.0f;
+}
+
+inline bool arpShouldStepNow() {
+  arpUpdateSmoothHz();
+  uint32_t now = micros();
+  if (arpNextStepUs == 0) {
+    arpNextStepUs = now;
+    return true;  // step immediately on (re)start
+  }
+  if ((int32_t)(now - arpNextStepUs) < 0) return false;
+  float intervalUsF = 1000000.0f / arpHzSmooth;
+  uint32_t intervalUs = (uint32_t)(intervalUsF + 0.5f);
+  arpNextStepUs += intervalUs;  // advance by one interval to reduce jitter
+  if ((int32_t)(now - arpNextStepUs) > (int32_t)intervalUs) {
+    arpNextStepUs = now + intervalUs;  // resync if we fell behind
+  }
+  return true;
+}
+
+// Called every loop()
+void arpEngine() {
+  if (!arpActive() || arpLen == 0) {
+    if (arpNoteActive) arpStopCurrent();
+    return;
+  }
+  if (!arpShouldStepNow()) return;
+
+  if (arpNoteActive) arpStopCurrent();  // tight JP-8 feel: off at step boundary
+
+  int16_t L = arpUnfoldedLength();
+  if (L <= 0) return;
+
+  arpPos = arpNextPos(L);
+  uint8_t nextNote = arpUnfoldedNoteAt(arpPos);
+
+  arpPlayNote(nextNote, arpCurrentVel);
+  arpCurrentNote = nextNote;
+  arpNoteActive = true;
+}
+
+// ---- transport helpers used by the buttons ----
+void arpStartTransport() {
+  arpPos = -1;
+  arpDir = +1;
+  arpNextStepUs = 0;
+  arpLastSmoothUs = 0;
+  arpHzTarget = LFOTEMPO[constrain(lowerData[P_arpRate], 0, 127)];
+  arpHzSmooth = arpHzTarget;
+  updateArpLEDs();
+}
+
+void arpAllOff() {
+  if (arpNoteActive) arpStopCurrent();
+  arpClearPattern();
+  for (int i = 0; i < 128; i++) {
+    keyDownArp[i] = false;
+    holdLatchedArp[i] = false;
+  }
+}
+
+void arpRestart() {  // clean restart on a mode change (keeps held notes)
+  if (arpNoteActive) arpStopCurrent();
+  arpPos = -1;
+  arpDir = +1;
+}
+
+void arpMsg(const String &val) {
+  showCurrentParameterPage("Arpeggiator", val);
+  startParameterDisplay();
+}
+
+void updateArpLEDs() {
+  // Always present a valid mode/range so the panel shows the current
+  // selection even before the arp is started.
+  if (lowerData[P_arpRange] < 1 || lowerData[P_arpRange] > 4) lowerData[P_arpRange] = 1;
+  if (lowerData[P_arpMode] < ARP_UP || lowerData[P_arpMode] > ARP_RANDOM) lowerData[P_arpMode] = ARP_UP;
+
+  uint8_t r = arpRangeVal();
+  mcp1.digitalWrite(ARP_OCT1_LED, (r == 1) ? HIGH : LOW);
+  mcp1.digitalWrite(ARP_OCT2_LED, (r == 2) ? HIGH : LOW);
+  mcp1.digitalWrite(ARP_OCT3_LED, (r == 3) ? HIGH : LOW);
+  mcp1.digitalWrite(ARP_OCT4_LED, (r == 4) ? HIGH : LOW);
+
+  mcp1.digitalWrite(ARP_UP_LED, (lowerData[P_arpMode] == ARP_UP) ? HIGH : LOW);
+  mcp1.digitalWrite(ARP_DOWN_LED, (lowerData[P_arpMode] == ARP_DOWN) ? HIGH : LOW);
+  mcp1.digitalWrite(ARP_UP_DOWN_LED, (lowerData[P_arpMode] == ARP_UPDOWN) ? HIGH : LOW);
+  mcp1.digitalWrite(ARP_RAND_LED, (lowerData[P_arpMode] == ARP_RANDOM) ? HIGH : LOW);
+
+  mcp2.digitalWrite(ARP_START_STOP_LED, lowerData[P_arpStartStop] ? HIGH : LOW);
+  mcp2.digitalWrite(ARP_LATCH_LED, lowerData[P_arpLatch] ? HIGH : LOW);
+}
+// =========================================================================
+
 void myNoteOn(byte channel, byte note, byte velocity) {
 
 
   numberOfNotesU++;
   numberOfNotesL++;
   prevNote = note;
+
+  // ---- ARP: capture held notes; the chord itself does not sound ----
+  if (arpActive() && arpInScope(note)) {
+    // Latch: the first key of a new phrase clears the previous chord
+    if (lowerData[P_arpLatch] && !anyArpKeyDown()) {
+      arpClearPattern();
+      for (int i = 0; i < 128; i++) holdLatchedArp[i] = false;
+    }
+    keyDownArp[note] = true;
+    holdLatchedArp[note] = false;
+    arpAddNote(note);
+    arpCurrentVel = velocity;
+    return;  // arp consumes this key
+  }
 
   // ---- CHORD HOLD FOR POLY1/POLY2 ----
   bool polyMode = (lowerData[P_keyboardMode] == 0 || lowerData[P_keyboardMode] == 1);
@@ -2198,6 +2774,17 @@ void myNoteOff(byte channel, byte note, byte velocity) {
   numberOfNotesU--;
   numberOfNotesL--;
 
+  // ---- ARP: release key from the pattern (or keep it if latched) ----
+  if (arpActive() && arpInScope(note)) {
+    keyDownArp[note] = false;
+    if (lowerData[P_arpLatch]) {
+      holdLatchedArp[note] = true;  // stays until a new phrase starts
+    } else {
+      arpRemoveNote(note);
+    }
+    return;  // arp consumes this key-up
+  }
+
   // ---- CHORD HOLD FOR POLY1/POLY2 ----
   bool polyMode = (lowerData[P_keyboardMode] == 0 || lowerData[P_keyboardMode] == 1);
   bool chordHoldIsActive = chordHoldActive && polyMode && playMode == 0;
@@ -2257,7 +2844,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
         else if (upperData[P_keyboardMode] == 3) commandUnisonNoteOffUpper(note);
         else {
           int upperVoice = voiceAssignmentUpper[note];
-          if (upperVoice >= 4 && upperVoice <= 11 && voiceToNoteUpper[upperVoice - 6] == note) {
+          if (upperVoice >= 6 && upperVoice <= 11 && voiceToNoteUpper[upperVoice - 6] == note) {
             releaseVoice(note, upperVoice);
             voiceAssignmentUpper[note] = -1;
             voiceToNoteUpper[upperVoice - 6] = -1;
@@ -2276,7 +2863,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
             commandUnisonNoteOffLower(note);
           } else {
             int lowerVoice = voiceAssignmentLower[note];
-            if (lowerVoice >= 0 && lowerVoice <= 3 && voiceToNoteLower[lowerVoice] == note) {
+            if (lowerVoice >= 0 && lowerVoice <= 5 && voiceToNoteLower[lowerVoice] == note) {
               releaseVoice(note, lowerVoice);
               voiceAssignmentLower[note] = -1;
               voiceToNoteLower[lowerVoice] = -1;
@@ -2544,9 +3131,9 @@ void assignVoice(byte note, byte velocity, int voiceIdx) {
     voices[voiceIdx].noteOn = true;  // <-- This enables chord hold!
 
     if (voiceIdx < 6) {
-      MIDI7.sendNoteOn(note, velocity, voiceIdx + 1);   // lower board, voices 1-6
+      MIDI7.sendNoteOn(note, velocity, voiceIdx + 1);  // lower board, voices 1-6
     } else {
-      MIDI8.sendNoteOn(note, velocity, voiceIdx - 5);   // upper board, voices 1-6
+      MIDI8.sendNoteOn(note, velocity, voiceIdx - 5);  // upper board, voices 1-6
     }
 
     voiceOn[voiceIdx] = true;
@@ -2556,9 +3143,9 @@ void assignVoice(byte note, byte velocity, int voiceIdx) {
 void releaseVoice(byte note, int voiceIdx) {
   if (voiceIdx >= 0 && voiceIdx < 12 && voices[voiceIdx].note == note) {
     if (voiceIdx < 6) {
-      MIDI7.sendNoteOn(note, 0, voiceIdx + 1);          // lower board, voices 1-6
+      MIDI7.sendNoteOff(note, 0, voiceIdx + 1);  // lower board, voices 1-6
     } else {
-      MIDI8.sendNoteOn(note, 0, voiceIdx - 5);          // upper board, voices 1-6
+      MIDI8.sendNoteOff(note, 0, voiceIdx - 5);  // upper board, voices 1-6
     }
     voices[voiceIdx].note = -1;
     voices[voiceIdx].noteOn = false;
@@ -3039,8 +3626,12 @@ FLASHMEM void updateglideTime(boolean announce) {
 }
 
 FLASHMEM void updateosc2Detune(boolean announce) {
+  uint8_t v = upperSW ? upperData[P_osc2Detune] : lowerData[P_osc2Detune];
+  int det = (v < 64) ? ((int)v - 63) : ((int)v - 64);
+
   if (announce) {
-    showCurrentParameterPage("OSC2 Detune", String(osc2Detunestr));
+    String disp = (det > 0) ? ("+" + String(det)) : String(det);
+    showCurrentParameterPage("OSC2 Detune", disp);
     startParameterDisplay();
   }
   if (upperSW) {
@@ -3057,9 +3648,57 @@ FLASHMEM void updateosc2Detune(boolean announce) {
   }
 }
 
-FLASHMEM void updateosc2Interval(boolean announce) {
+FLASHMEM void updatedualDetune(boolean announce) {
+  uint8_t v = upperData[P_dualDetune];
+  int det = (v < 64) ? ((int)v - 63) : ((int)v - 64);
+
   if (announce) {
-    showCurrentParameterPage("OSC2 Interval", String(osc2Intervalstr));
+    String disp = (det > 0) ? ("+" + String(det)) : String(det);
+    showCurrentParameterPage("Dual Detune", disp);
+    startParameterDisplay();
+  }
+  if (playMode == 1) {
+    midiCCOut89(CC_VOICE_DETUNE, upperData[P_dualDetune]);
+    midiCCOut(CCdualDetune, upperData[P_dualDetune]);
+    midiCCOut61(CCdualDetune, upperData[P_dualDetune]);
+  } else {
+    if (wholemode) {
+      midiCCOut89(CC_VOICE_DETUNE, 64);
+    }
+    midiCCOut(CCdualDetune, 64);
+    midiCCOut61(CCdualDetune, 64);
+  }
+}
+
+FLASHMEM void updateunisonDetune(boolean announce) {
+
+  if (announce) {
+    showCurrentParameterPage("Unsion Detune", int(unisonDetunestr));
+    startParameterDisplay();
+  }
+  if (upperSW) {
+    midiCCOut89(CC_UNISON_DETUNE, upperData[P_unisonDetune]);
+    midiCCOut(CCunisonDetune, upperData[P_unisonDetune]);
+    midiCCOut61(CCunisonDetune, upperData[P_unisonDetune]);
+  } else {
+    midiCCOut79(CC_UNISON_DETUNE, lowerData[P_unisonDetune]);
+    midiCCOut(CCunisonDetune, lowerData[P_unisonDetune]);
+    midiCCOut61(CCunisonDetune, lowerData[P_unisonDetune]);
+    if (wholemode) {
+      midiCCOut89(CC_UNISON_DETUNE, upperData[P_unisonDetune]);
+    }
+  }
+}
+
+FLASHMEM void updateosc2Interval(boolean announce) {
+  uint8_t v = upperSW ? upperData[P_osc2Interval] : lowerData[P_osc2Interval];
+  int semis = (int)roundf(((float)v - 64.0f) / 64.0f * 12.0f);
+  if (semis > 12) semis = 12;
+  if (semis < -12) semis = -12;
+
+  if (announce) {
+    String disp = (semis > 0) ? ("+" + String(semis)) : String(semis);
+    showCurrentParameterPage("OSC2 Interval", disp);
     startParameterDisplay();
   }
   if (upperSW) {
@@ -3215,15 +3854,15 @@ FLASHMEM void updateOsc2EnvDepth(boolean announce) {
     startParameterDisplay();
   }
   if (upperSW) {
-    midiCCOut89(CC_XMOD_DEPTH, upperData[P_osc2envDepth]);
+    midiCCOut89(CC_ENV_DEPTH, upperData[P_osc2envDepth]);
     midiCCOut(CCosc2EnvDepth, upperData[P_osc2envDepth]);
     midiCCOut61(CCosc2EnvDepth, upperData[P_osc2envDepth]);
   } else {
-    midiCCOut79(CC_XMOD_DEPTH, lowerData[P_osc2envDepth]);
+    midiCCOut79(CC_ENV_DEPTH, lowerData[P_osc2envDepth]);
     midiCCOut(CCosc2EnvDepth, lowerData[P_osc2envDepth]);
     midiCCOut61(CCosc2EnvDepth, lowerData[P_osc2envDepth]);
     if (wholemode) {
-      midiCCOut89(CC_XMOD_DEPTH, upperData[P_osc2envDepth]);
+      midiCCOut89(CC_ENV_DEPTH, upperData[P_osc2envDepth]);
     }
   }
 }
@@ -3697,6 +4336,7 @@ FLASHMEM void updatekeytrack(boolean announce) {
 
 FLASHMEM void updatearpRate(boolean announce) {
 
+  arpHzTarget = LFOTEMPO[constrain(lowerData[P_arpRate], 0, 127)];
   if (announce) {
     showCurrentParameterPage("Arp Rate", String(arpRatestr) + " Hz");
     startParameterDisplay();
@@ -3886,6 +4526,25 @@ FLASHMEM void updateeffectPot3(boolean announce) {
     midiCCOut61(CCeffectPot3, lowerData[P_effectPot3]);
     if (wholemode) {
       midiCCOut810(VB_EFFECT_POT3, upperData[P_effectPot3]);
+    }
+  }
+}
+
+FLASHMEM void updatevcfATDepth(boolean announce) {
+  if (announce) {
+    showCurrentParameterPage("VCF AT Depth", String(vcfATDepthstr));
+    startParameterDisplay();
+  }
+  if (upperSW) {
+    midiCCOut89(CC_AT_VCF_DEPTH, upperData[P_vcfATDepth]);
+    midiCCOut(CCvcfATDepth, upperData[P_vcfATDepth]);
+    midiCCOut61(CCvcfATDepth, upperData[P_vcfATDepth]);
+  } else {
+    midiCCOut79(CC_AT_VCF_DEPTH, lowerData[P_vcfATDepth]);
+    midiCCOut(CCvcfATDepth, lowerData[P_vcfATDepth]);
+    midiCCOut61(CCvcfATDepth, lowerData[P_vcfATDepth]);
+    if (wholemode) {
+      midiCCOut89(CC_AT_VCF_DEPTH, upperData[P_vcfATDepth]);
     }
   }
 }
@@ -4597,17 +5256,20 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
         showCurrentParameterPage("Keyboard Mode", "Poly 1");
         startParameterDisplay();
       }
+      midiCCOut89(CC_UNISON_MODE, 0);
       mcp3.digitalWrite(POLY1_LED, HIGH);
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, LOW);
       mcp3.digitalWrite(MONO_LED, LOW);
       midiCCOut62(CCkeyboardMode, 0);
       midiCCOut(CCkeyboardMode, 0);
+
     } else if (upperData[P_keyboardMode] == 1) {
       if (announce) {
         showCurrentParameterPage("Keyboard Mode", "Poly 2");
         startParameterDisplay();
       }
+      midiCCOut89(CC_UNISON_MODE, 0);      
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, HIGH);
       mcp3.digitalWrite(UNISON_LED, LOW);
@@ -4621,6 +5283,7 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
       }
       midiCCOut62(CCkeyboardMode, 2);
       midiCCOut(CCkeyboardMode, 2);
+      midiCCOut89(CC_UNISON_MODE, 0);
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, LOW);
@@ -4630,12 +5293,13 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
         showCurrentParameterPage("Keyboard Mode", "Unison");
         startParameterDisplay();
       }
+      midiCCOut89(CC_UNISON_MODE, 127);
+      midiCCOut62(CCkeyboardMode, 3);
+      midiCCOut(CCkeyboardMode, 3);
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, HIGH);
       mcp3.digitalWrite(MONO_LED, LOW);
-      midiCCOut62(CCkeyboardMode, 3);
-      midiCCOut(CCkeyboardMode, 3);
     }
   } else {
     if (dualmode) {
@@ -4645,6 +5309,10 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
       if (announce) {
         showCurrentParameterPage("Keyboard Mode", "Poly 1");
         startParameterDisplay();
+      }
+      midiCCOut79(CC_UNISON_MODE, 0);
+      if (wholemode) {
+        midiCCOut89(CC_UNISON_MODE, 0);
       }
       midiCCOut62(CCkeyboardMode, 0);
       midiCCOut(CCkeyboardMode, 0);
@@ -4657,6 +5325,10 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
         showCurrentParameterPage("Keyboard Mode", "Poly 2");
         startParameterDisplay();
       }
+      midiCCOut79(CC_UNISON_MODE, 0);
+      if (wholemode) {
+        midiCCOut89(CC_UNISON_MODE, 0);
+      }
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, HIGH);
       mcp3.digitalWrite(UNISON_LED, LOW);
@@ -4668,6 +5340,10 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
         showCurrentParameterPage("Keyboard Mode", "Mono");
         startParameterDisplay();
       }
+      midiCCOut79(CC_UNISON_MODE, 0);
+      if (wholemode) {
+        midiCCOut89(CC_UNISON_MODE, 0);
+      }      
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, LOW);
@@ -4679,6 +5355,10 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
         showCurrentParameterPage("Keyboard Mode", "Unison");
         startParameterDisplay();
       }
+      midiCCOut79(CC_UNISON_MODE, 127);
+      if (wholemode) {
+        midiCCOut89(CC_UNISON_MODE, 127);
+      }      
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, HIGH);
@@ -4921,11 +5601,12 @@ FLASHMEM void updateeffectBankSW(boolean announce) {
   }
 
   if (upperSW) {
-    // Step 1: Enter external mode
-    midiCCOut89(CC_FV1_INTERNAL, 127);
+    // // Step 1: Enter external mode
+    // midiCCOut89(CC_FV1_INTERNAL, 127);
+    // delay(10);
 
     // Step 2: Reset all CS lines
-    midiCCOut89(CC_FV1_BANK_0, 127);
+    midiCCOut89(CC_FV1_BANK_0, 0);
     midiCCOut89(CC_FV1_BANK_1, 127);
     midiCCOut89(CC_FV1_BANK_2, 127);
 
@@ -4933,34 +5614,39 @@ FLASHMEM void updateeffectBankSW(boolean announce) {
     if (bank == 0) {
       // Internal ROM selected
       midiCCOut89(CC_FV1_INTERNAL, 0);
-
+      delay(10);
     } else {
       // Select only the chosen EEPROM
       if (bank == 1) {
         midiCCOut89(CC_FV1_BANK_0, 0);
+        midiCCOut89(CC_FV1_BANK_1, 127);
+        midiCCOut89(CC_FV1_BANK_2, 127);
       } else if (bank == 2) {
-        midiCCOut89(CC_FV1_BANK_1, 0);
+        midiCCOut89(CC_FV1_BANK_0, 0);
+        midiCCOut89(CC_FV1_BANK_1, 127);
+        midiCCOut89(CC_FV1_BANK_2, 127);
       } else if (bank == 3) {
+        midiCCOut89(CC_FV1_BANK_0, 127);
+        midiCCOut89(CC_FV1_BANK_1, 127);
         midiCCOut89(CC_FV1_BANK_2, 0);
-
-        midiCCOut89(CC_FV1_INTERNAL, 0);
-        delay(1);
-        midiCCOut89(CC_FV1_INTERNAL, 127);
       }
+      midiCCOut89(CC_FV1_INTERNAL, 0);
+      delay(10);
+      midiCCOut89(CC_FV1_INTERNAL, 127);
     }
   } else {
-    // Step 1: Enter external mode
-    midiCCOut79(CC_FV1_INTERNAL, 127);
+    // // Step 1: Enter external mode
+    // midiCCOut79(CC_FV1_INTERNAL, 127);
 
     // Step 2: Reset all CS lines
-    midiCCOut79(CC_FV1_BANK_0, 127);
+    midiCCOut79(CC_FV1_BANK_0, 0);
     midiCCOut79(CC_FV1_BANK_1, 127);
     midiCCOut79(CC_FV1_BANK_2, 127);
     if (wholemode) {
-      midiCCOut89(CC_FV1_INTERNAL, 127);
+      // midiCCOut89(CC_FV1_INTERNAL, 127);
 
       // Step 2: Reset all CS lines
-      midiCCOut89(CC_FV1_BANK_0, 127);
+      midiCCOut89(CC_FV1_BANK_0, 0);
       midiCCOut89(CC_FV1_BANK_1, 127);
       midiCCOut89(CC_FV1_BANK_2, 127);
     }
@@ -4973,30 +5659,42 @@ FLASHMEM void updateeffectBankSW(boolean announce) {
     } else {
       if (bank == 1) {
         midiCCOut79(CC_FV1_BANK_0, 0);
+        midiCCOut79(CC_FV1_BANK_1, 127);
+        midiCCOut79(CC_FV1_BANK_2, 127);
         if (wholemode) {
           midiCCOut89(CC_FV1_BANK_0, 0);
+          midiCCOut89(CC_FV1_BANK_1, 127);
+          midiCCOut89(CC_FV1_BANK_2, 127);
         }
       } else if (bank == 2) {
+        midiCCOut79(CC_FV1_BANK_0, 127);
         midiCCOut79(CC_FV1_BANK_1, 0);
+        midiCCOut79(CC_FV1_BANK_2, 127);
         if (wholemode) {
+          midiCCOut89(CC_FV1_BANK_0, 127);
           midiCCOut89(CC_FV1_BANK_1, 0);
+          midiCCOut89(CC_FV1_BANK_2, 127);
         }
       } else if (bank == 3) {
+        midiCCOut79(CC_FV1_BANK_0, 127);
+        midiCCOut79(CC_FV1_BANK_1, 127);
         midiCCOut79(CC_FV1_BANK_2, 0);
         if (wholemode) {
+          midiCCOut89(CC_FV1_BANK_0, 127);
+          midiCCOut89(CC_FV1_BANK_1, 127);
           midiCCOut89(CC_FV1_BANK_2, 0);
         }
-
       }
+      delay(10);
       midiCCOut79(CC_FV1_INTERNAL, 0);
-      delay(1);
+      delay(10);
       midiCCOut79(CC_FV1_INTERNAL, 127);
       if (wholemode) {
+        delay(10);
         midiCCOut89(CC_FV1_INTERNAL, 0);
-        delay(1);
+        delay(10);
         midiCCOut89(CC_FV1_INTERNAL, 127);
       }
-
     }
 
     // Send MIDI
@@ -5626,6 +6324,57 @@ void changeSpeed() {
   }
 }
 
+FLASHMEM void updatefx_Bypass(boolean announce) {
+
+  if (upperSW) {
+    if (!upperData[P_fx_Bypass]) {
+      if (announce) {
+        showCurrentParameterPage("FX loop", "Off");
+        startParameterDisplay();
+      }
+      midiCCOut89(CC_FV1_INTERNAL, 0);
+      midiCCOut(CCfx_Bypass, 0);
+      midiCCOut62(CCfx_Bypass, 0);
+      mcp15.digitalWrite(FX_BYPASS_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("FX Loop", "On");
+        startParameterDisplay();
+      }
+      midiCCOut89(CC_FV1_INTERNAL, 127);
+      midiCCOut(CCfx_Bypass, 127);
+      midiCCOut62(CCfx_Bypass, 1);
+      mcp15.digitalWrite(FX_BYPASS_LED, HIGH);
+    }
+  } else {
+    if (!lowerData[P_fx_Bypass]) {
+      if (announce) {
+        showCurrentParameterPage("FX Loop", "Off");
+        startParameterDisplay();
+      }
+      midiCCOut79(CC_FV1_INTERNAL, 0);
+      if (wholemode) {
+        midiCCOut89(CC_FV1_INTERNAL, 0);
+      }
+      midiCCOut(CCfx_Bypass, 0);
+      midiCCOut62(CCfx_Bypass, 0);
+      mcp15.digitalWrite(FX_BYPASS_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("FX Loop", "On");
+        startParameterDisplay();
+      }
+      midiCCOut79(CC_FV1_INTERNAL, 127);
+      if (wholemode) {
+        midiCCOut89(CC_FV1_INTERNAL, 127);
+      }
+      midiCCOut(CCfx_Bypass, 127);
+      midiCCOut62(CCfx_Bypass, 1);
+      mcp15.digitalWrite(FX_BYPASS_LED, HIGH);
+    }
+  }
+}
+
 FLASHMEM void updatefilterenvLogLin(boolean announce) {
 
   if (upperSW) {
@@ -5935,6 +6684,160 @@ FLASHMEM void updatefilterVel(boolean announce) {
       midiCCOut62(CCfilterVel, 1);
       midiCCOut(CCfilterVel, 127);
       mcp9.digitalWrite(VCF_VELOCITY_LED, HIGH);
+    }
+  }
+}
+
+FLASHMEM void updateenv2_punch(boolean announce) {
+  if (upperSW) {
+    if (upperData[P_env2_punch] == 0) {
+      if (announce) {
+        showCurrentParameterPage("VCF Env Punch", "Off");
+        startParameterDisplay();
+      }
+      midiCCOut810(VB_VCF_ENV_PUNCH, 127);
+      midiCCOut62(CCenv2_punch, 0);
+      midiCCOut(CCenv2_punch, 0);
+      mcp15.digitalWrite(VCF_PUNCH_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("VCF Env Punch", "On");
+        startParameterDisplay();
+      }
+      midiCCOut810(VB_VCF_ENV_PUNCH, 0);
+      midiCCOut62(CCenv2_punch, 1);
+      midiCCOut(CCenv2_punch, 127);
+      mcp15.digitalWrite(VCF_PUNCH_LED, HIGH);
+    }
+  } else {
+    if (lowerData[P_env2_punch] == 0) {
+      if (announce) {
+        showCurrentParameterPage("VCF Env Punch", "Off");
+        startParameterDisplay();
+      }
+      midiCCOut710(VB_VCF_ENV_PUNCH, 127);
+      if (wholemode) {
+        midiCCOut810(VB_VCF_ENV_PUNCH, 127);
+      }
+      midiCCOut62(CCenv2_punch, 0);
+      midiCCOut(CCenv2_punch, 0);
+      mcp15.digitalWrite(VCF_PUNCH_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("VCF Env Punch", "On");
+        startParameterDisplay();
+      }
+      midiCCOut710(VB_VCF_ENV_PUNCH, 0);
+      if (wholemode) {
+        midiCCOut810(VB_VCF_ENV_PUNCH, 0);
+      }
+      midiCCOut62(CCenv2_punch, 1);
+      midiCCOut(CCenv2_punch, 127);
+      mcp15.digitalWrite(VCF_PUNCH_LED, HIGH);
+    }
+  }
+}
+
+FLASHMEM void updateenv3_punch(boolean announce) {
+  if (upperSW) {
+    if (upperData[P_env3_punch] == 0) {
+      if (announce) {
+        showCurrentParameterPage("VCA Env Punch", "Off");
+        startParameterDisplay();
+      }
+      midiCCOut810(VB_AMP_ENV_PUNCH, 127);
+      midiCCOut62(CCenv3_punch, 0);
+      midiCCOut(CCenv3_punch, 0);
+      mcp14.digitalWrite(VCA_ENV_PUNCH_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("VCA Env Punch", "On");
+        startParameterDisplay();
+      }
+      midiCCOut810(VB_AMP_ENV_PUNCH, 0);
+      midiCCOut62(CCenv3_punch, 1);
+      midiCCOut(CCenv3_punch, 127);
+      mcp14.digitalWrite(VCA_ENV_PUNCH_LED, HIGH);
+    }
+  } else {
+    if (lowerData[P_env3_punch] == 0) {
+      if (announce) {
+        showCurrentParameterPage("VCA Env Punch", "Off");
+        startParameterDisplay();
+      }
+      midiCCOut710(VB_AMP_ENV_PUNCH, 127);
+      if (wholemode) {
+        midiCCOut810(VB_AMP_ENV_PUNCH, 127);
+      }
+      midiCCOut62(CCenv3_punch, 0);
+      midiCCOut(CCenv3_punch, 0);
+      mcp14.digitalWrite(VCA_ENV_PUNCH_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("VCA Env Punch", "On");
+        startParameterDisplay();
+      }
+      midiCCOut710(VB_AMP_ENV_PUNCH, 0);
+      if (wholemode) {
+        midiCCOut810(VB_AMP_ENV_PUNCH, 0);
+      }
+      midiCCOut62(CCenv3_punch, 1);
+      midiCCOut(CCenv3_punch, 127);
+      mcp14.digitalWrite(VCA_ENV_PUNCH_LED, HIGH);
+    }
+  }
+}
+
+FLASHMEM void updateenv2_env3_adsr(boolean announce) {
+  if (upperSW) {
+    if (upperData[P_env2_env3_adsr] == 0) {
+      if (announce) {
+        showCurrentParameterPage("VCF/VCA Env Type", "ADSR");
+        startParameterDisplay();
+      }
+      midiCCOut89(CC_GATE_ENABLE, 1);
+      midiCCOut62(CCenv2_env3_adsr, 1);
+      midiCCOut(CCenv2_env3_adsr, 1);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, HIGH);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("VCF/VCA Env Type", "ADR");
+        startParameterDisplay();
+      }
+      midiCCOut89(CC_GATE_ENABLE, 0);
+      midiCCOut62(CCenv2_env3_adsr, 0);
+      midiCCOut(CCenv2_env3_adsr, 0);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, LOW);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, HIGH);
+    }
+  } else {
+    if (lowerData[P_env2_env3_adsr] == 0) {
+      if (announce) {
+        showCurrentParameterPage("VCF/VCA Env Type", "ADSR");
+        startParameterDisplay();
+      }
+      midiCCOut79(CC_GATE_ENABLE, 1);
+      if (wholemode) {
+        midiCCOut89(CC_GATE_ENABLE, 1);
+      }
+      midiCCOut62(CCenv2_env3_adsr, 1);
+      midiCCOut(CCenv2_env3_adsr, 1);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, HIGH);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("VCF/VCA Env Type", "ADR");
+        startParameterDisplay();
+      }
+      midiCCOut79(CC_GATE_ENABLE, 0);
+      if (wholemode) {
+        midiCCOut89(CC_GATE_ENABLE, 0);
+      }
+      midiCCOut62(CCenv2_env3_adsr, 0);
+      midiCCOut(CCenv2_env3_adsr, 0);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, LOW);
+      mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, HIGH);
     }
   }
 }
@@ -6364,10 +7267,11 @@ FLASHMEM void updateLFO1retrig(boolean announce) {
 }
 
 void startParameterDisplay() {
-  refreshScreen();
-
+  // Defer the (blocking) TFT redraw to loop() so turning controls doesn't
+  // stall the main loop and stutter the arpeggiator.
   lastDisplayTriggerTime = millis();
   waitingToUpdate = true;
+  paramDisplayDirty = true;
 }
 
 void updatePatchname() {
@@ -6528,8 +7432,27 @@ void myControlChange(byte channel, byte control, int value) {
           upperData[P_osc2Detune] = value;
         }
       }
-      osc2Detunestr = PULSEWIDTH[value];
       updateosc2Detune(1);
+      break;
+
+    case CCdualDetune:
+      if (upperSW) {
+        upperData[P_dualDetune] = value;
+      }
+      updatedualDetune(1);
+      break;
+
+    case CCunisonDetune:
+      if (upperSW) {
+        upperData[P_unisonDetune] = value;       
+      } else {
+        lowerData[P_unisonDetune] = value;
+        if (wholemode) {
+          upperData[P_unisonDetune] = value;
+        }
+      }
+      unisonDetunestr = value;
+      updateunisonDetune(1);
       break;
 
     case CCosc2Interval:
@@ -6863,6 +7786,19 @@ void myControlChange(byte channel, byte control, int value) {
       }
       effectPot3str = value;  // for display
       updateeffectPot3(1);
+      break;
+
+    case CCvcfATDepth:
+      if (upperSW) {
+        upperData[P_vcfATDepth] = value;
+      } else {
+        lowerData[P_vcfATDepth] = value;
+        if (wholemode) {
+          upperData[P_vcfATDepth] = value;
+        }
+      }
+      vcfATDepthstr = value;  // for display
+      updatevcfATDepth(1);
       break;
 
     case CCeffectsMix:
@@ -7203,6 +8139,33 @@ void myControlChange(byte channel, byte control, int value) {
       updatefilterVel(1);
       break;
 
+    case CCenv2_punch:
+      if (upperSW) {
+        upperData[P_env2_punch] = !upperData[P_env2_punch];
+      } else {
+        lowerData[P_env2_punch] = !lowerData[P_env2_punch];
+      }
+      updateenv2_punch(1);
+      break;
+
+    case CCenv3_punch:
+      if (upperSW) {
+        upperData[P_env3_punch] = !upperData[P_env3_punch];
+      } else {
+        lowerData[P_env3_punch] = !lowerData[P_env3_punch];
+      }
+      updateenv3_punch(1);
+      break;
+
+    case CCenv2_env3_adsr:
+      if (upperSW) {
+        upperData[P_env2_env3_adsr] = !upperData[P_env2_env3_adsr];
+      } else {
+        lowerData[P_env2_env3_adsr] = !lowerData[P_env2_env3_adsr];
+      }
+      updateenv2_env3_adsr(1);
+      break;
+
     case CCfilterEGinv:
       if (upperSW) {
         upperData[P_filterEGinv] = !upperData[P_filterEGinv];
@@ -7239,6 +8202,15 @@ void myControlChange(byte channel, byte control, int value) {
         lowerData[P_keytrackSW] = !lowerData[P_keytrackSW];
       }
       updatekeyTrackSW(1);
+      break;
+
+    case CCfx_Bypass:
+      if (upperSW) {
+        upperData[P_fx_Bypass] = !upperData[P_fx_Bypass];
+      } else {
+        lowerData[P_fx_Bypass] = !lowerData[P_fx_Bypass];
+      }
+      updatefx_Bypass(1);
       break;
 
     case CCfilterenvLinLogSW:
@@ -7513,7 +8485,7 @@ void myAfterTouch(byte channel, byte value) {
 
   switch (upperData[P_AfterTouchDest]) {
     case 1:
-        MIDI8.sendAfterTouch(value, 9);
+      MIDI8.sendAfterTouch(value, 9);
 
       break;
     case 2:
@@ -7538,7 +8510,6 @@ void myAfterTouch(byte channel, byte value) {
 
       if (wholemode) {
         MIDI8.sendAfterTouch(value, 1);
-
       }
       break;
     case 2:
@@ -7595,10 +8566,10 @@ void recallPatch(int patchNo) {
 }
 
 void setCurrentPatchData(String data[]) {
-  int tempData[95];  // Temporary array for converted integers
+  int tempData[110];  // Temporary array for converted integers
 
   // Convert data from String to int once
-  for (int i = 1; i <= 94; i++) {
+  for (int i = 1; i <= 105; i++) {
     tempData[i] = data[i].toInt();
   }
 
@@ -7622,7 +8593,7 @@ void setCurrentPatchData(String data[]) {
     if (wholemode) {
 
       // Update previous values and pick-up flags
-      for (int i = 1; i <= 94; i++) {
+      for (int i = 1; i <= 105; i++) {
         upperData[i] = lowerData[i];  // Store previous value
       }
 
@@ -7679,6 +8650,7 @@ void upperParamsToDisplay() {
   updateeffectPot1(0);
   updateeffectPot2(0);
   updateeffectPot3(0);
+  updatevcfATDepth(0);
   updateeffectsMix(0);
   updatenoiseLevel(0);
   updatemodWheelDepth(0);
@@ -7691,12 +8663,14 @@ void upperParamsToDisplay() {
   updateATDepth(0);
   updateamDepth(0);
   updateFilterType(0);
-  updateLFO3Waveform(0); 
+  updateLFO3Waveform(0);
   updateeffectBankSW(0);
   updateeffectNumSW(0);
   updatearpRate(0);
   updateosc1envPWM(0);
   updateosc2envPWM(0);
+  updatedualDetune(0);
+  updateunisonDetune(0);
 }
 
 void lowerParamsToDisplay() {
@@ -7743,6 +8717,7 @@ void lowerParamsToDisplay() {
   updateeffectPot1(0);
   updateeffectPot2(0);
   updateeffectPot3(0);
+  updatevcfATDepth(0);
   updateeffectsMix(0);
   updatenoiseLevel(0);
   updatemodWheelDepth(0);
@@ -7761,6 +8736,8 @@ void lowerParamsToDisplay() {
   updatearpRate(0);
   updateosc1envPWM(0);
   updateosc2envPWM(0);
+  updatedualDetune(0);
+  updateunisonDetune(0);
 }
 
 void setAllButtons() {
@@ -7786,7 +8763,11 @@ void setAllButtons() {
   updatefilterenvLogLin(0);
   updateampenvLogLin(0);
   updatefilterVel(0);
+  updateenv2_punch(0);
+  updateenv3_punch(0);
+  updateenv2_env3_adsr(0);
   updatenoiseSrc(0);
+  updateArpLEDs();
 }
 
 String getCurrentPatchData() {
@@ -7811,7 +8792,12 @@ String getCurrentPatchData() {
            + "," + String(upperData[P_ATDepth]) + "," + String(upperData[P_pitchAttack]) + "," + String(upperData[P_pitchDecay]) + "," + String(upperData[P_pitchSustain]) + "," + String(upperData[P_pitchRelease])
            + "," + String(upperData[P_LFO3Delay]) + "," + String(upperData[P_osc1sawDetune]) + "," + String(upperData[P_osc1sawCount]) + "," + String(upperData[P_arpRate])
            + "," + String(upperData[P_LFO3Waveform]) + "," + String(upperData[P_LFO2Waveform]) + "," + String(upperData[P_osc2envDepth]) + "," + String(upperData[P_noiseSrc]) + "," + String(upperData[P_lfo1retrig])
-           + "," + String(upperData[P_osc1envPWM]) + "," + String(upperData[P_osc2envPWM]) + "," + String(upperData[P_dco_at_SW]) + "," + String(upperData[P_filter_at_SW]);
+           + "," + String(upperData[P_osc1envPWM]) + "," + String(upperData[P_osc2envPWM]) + "," + String(upperData[P_dco_at_SW]) + "," + String(upperData[P_filter_at_SW])
+           + "," + String(upperData[P_arpStartStop]) + "," + String(upperData[P_arpRange]) + "," + String(upperData[P_arpMode]) + "," + String(upperData[P_arpLatch])
+           + "," + String(upperData[P_vcfATDepth]) + "," + String(upperData[P_fx_Bypass]) + "," + String(upperData[P_unisonDetune]) + "," + String(upperData[P_dualDetune])
+           + "," + String(upperData[P_env2_env3_adsr]) + "," + String(upperData[P_env1_adsr]) + "," + String(upperData[P_env1_punch]) + "," + String(upperData[P_env2_punch])
+           + "," + String(upperData[P_env3_punch]);
+
   } else {
     return patchNameL + "," + String(lowerData[P_LFO2Rate]) + "," + String(lowerData[P_fmDepth]) + "," + String(lowerData[P_osc2PW]) + "," + String(lowerData[P_osc2PWM])
            + "," + String(lowerData[P_osc1PW]) + "," + String(lowerData[P_osc1PWM]) + "," + String(lowerData[P_osc1Range]) + "," + String(lowerData[P_osc2Range]) + "," + String(lowerData[P_osc2Interval])
@@ -7833,7 +8819,11 @@ String getCurrentPatchData() {
            + "," + String(lowerData[P_ATDepth]) + "," + String(lowerData[P_pitchAttack]) + "," + String(lowerData[P_pitchDecay]) + "," + String(lowerData[P_pitchSustain]) + "," + String(lowerData[P_pitchRelease])
            + "," + String(lowerData[P_LFO3Delay]) + "," + String(lowerData[P_osc1sawDetune]) + "," + String(lowerData[P_osc1sawCount]) + "," + String(lowerData[P_arpRate])
            + "," + String(lowerData[P_LFO3Waveform]) + "," + String(lowerData[P_LFO2Waveform]) + "," + String(lowerData[P_osc2envDepth]) + "," + String(lowerData[P_noiseSrc]) + "," + String(lowerData[P_lfo1retrig])
-           + "," + String(lowerData[P_osc1envPWM]) + "," + String(lowerData[P_osc2envPWM]) + "," + String(lowerData[P_dco_at_SW]) + "," + String(lowerData[P_filter_at_SW]);
+           + "," + String(lowerData[P_osc1envPWM]) + "," + String(lowerData[P_osc2envPWM]) + "," + String(lowerData[P_dco_at_SW]) + "," + String(lowerData[P_filter_at_SW])
+           + "," + String(lowerData[P_arpStartStop]) + "," + String(lowerData[P_arpRange]) + "," + String(lowerData[P_arpMode]) + "," + String(lowerData[P_arpLatch])
+           + "," + String(lowerData[P_vcfATDepth]) + "," + String(lowerData[P_fx_Bypass]) + "," + String(lowerData[P_unisonDetune]) + "," + String(lowerData[P_dualDetune])
+           + "," + String(lowerData[P_env2_env3_adsr]) + "," + String(lowerData[P_env1_adsr]) + "," + String(lowerData[P_env1_punch]) + "," + String(lowerData[P_env2_punch])
+           + "," + String(lowerData[P_env3_punch]);
   }
 }
 
@@ -8686,15 +9676,21 @@ void loop() {
   checkEncoder();
   midi1.read(midiChannel);  //USB HOST MIDI Class Compliant
   MIDI.read(midiChannel);
-  MIDI6.read(6);
-  MIDI7.read(7);
-  MIDI8.read(8);
   usbMIDI.read(midiChannel);
   LFODelayHandle();
   changeSpeed();
   checkChordHold();
+  arpEngine();
 
-  if (waitingToUpdate && (millis() - lastDisplayTriggerTime >= displayTimeout)) {
+  // Draw the parameter page here (after the arp step has been serviced),
+  // throttled, so turning controls doesn't block the loop and stutter the arp.
+  if (paramDisplayDirty && (millis() - lastParamDrawTime >= paramDrawInterval) && !tft.asyncUpdateActive()) {
+    refreshScreen();
+    lastParamDrawTime = millis();
+    paramDisplayDirty = false;
+  }
+
+  if (waitingToUpdate && (millis() - lastDisplayTriggerTime >= displayTimeout) && !tft.asyncUpdateActive()) {
     refreshScreen();  // retrigger
     waitingToUpdate = false;
   }

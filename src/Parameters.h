@@ -34,7 +34,7 @@ bool chordHoldCaptureWindowActive = false;
 
 // adding encoders
 bool rotaryEncoderChanged(int id, bool clockwise, int speed);
-#define NUM_ENCODERS 56
+#define NUM_ENCODERS 59
 unsigned long lastTransition[NUM_ENCODERS + 1];
 boolean accelerate = true;
 int speed = 1;
@@ -42,9 +42,9 @@ int value = 0;
 float lastSpeed[NUM_ENCODERS + 1] = { 0 }; // Or whatever your encoder count is
 bool halfStepMode = false;
 
-int upperData[96];
-int lowerData[96];
-int panelData[96];
+int upperData[110];
+int lowerData[110];
+int panelData[110];
 
 #define P_sysex 0
 #define P_LFO2Rate 1
@@ -138,6 +138,19 @@ int panelData[96];
 #define P_osc2envPWM 89
 #define P_dco_at_SW 90
 #define P_filter_at_SW 91
+#define P_arpStartStop 92
+#define P_arpRange 93
+#define P_arpMode 94
+#define P_arpLatch 95
+#define P_vcfATDepth 96
+#define P_fx_Bypass 97
+#define P_unisonDetune 98
+#define P_dualDetune 99
+#define P_env2_env3_adsr 100
+#define P_env1_adsr 101
+#define P_env1_punch 102
+#define P_env2_punch 103
+#define P_env3_punch 104
 
 int playMode = 0;
 int lowerSplitVoicePointer = 0;
@@ -248,6 +261,7 @@ float pitchAttackstr = 0;
 int effectPot1str = 0;
 int effectPot2str = 0;
 int effectPot3str = 0;
+int vcfATDepthstr = 0;
 float effectsMixstr = 0;
 int filterLevel1str = 0;
 int filterLevel2str = 0;
@@ -261,6 +275,7 @@ int osc1sawCountstr = 0;
 int LFO3Waveformstr = 0;
 int LFO2Waveformstr = 0;
 int osc2envDepthstr = 0;
+int unisonDetunestr = 0;
 
 boolean wholemode = true;
 boolean dualmode = false;
