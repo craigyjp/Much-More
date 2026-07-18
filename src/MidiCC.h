@@ -235,7 +235,7 @@
 #define VB_AMP_LOOP_BIT0 74
 #define VB_VCF_ENV_PUNCH 75
 #define VB_AMP_ENV_PUNCH 76
-// 77
+#define LFO3_SYNC 77
 // 78
 // 79
 
