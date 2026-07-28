@@ -527,18 +527,18 @@ void RotaryEncoderChanged(bool clockwise, int id) {
       updateOsc1PulseLevel(1);
       break;
 
-    case 9:
+    case 26:
       if (upperSW) {
-        upperData[P_osc1SubLevel] = (upperData[P_osc1SubLevel] + speed);
-        upperData[P_osc1SubLevel] = constrain(upperData[P_osc1SubLevel], 0, 127);
-        osc1SubLevelstr = upperData[P_osc1SubLevel];
+        upperData[P_osc2SubLevel] = (upperData[P_osc2SubLevel] + speed);
+        upperData[P_osc2SubLevel] = constrain(upperData[P_osc2SubLevel], 0, 127);
+        osc2SubLevelstr = upperData[P_osc2SubLevel];
       } else {
-        lowerData[P_osc1SubLevel] = (lowerData[P_osc1SubLevel] + speed);
-        lowerData[P_osc1SubLevel] = constrain(lowerData[P_osc1SubLevel], 0, 127);
-        osc1SubLevelstr = lowerData[P_osc1SubLevel];
+        lowerData[P_osc2SubLevel] = (lowerData[P_osc2SubLevel] + speed);
+        lowerData[P_osc2SubLevel] = constrain(lowerData[P_osc2SubLevel], 0, 127);
+        osc2SubLevelstr = lowerData[P_osc2SubLevel];
       }
 
-      updateOsc1SubLevel(1);
+      updateosc2SubLevel(1);
       break;
 
     case 10:
@@ -765,18 +765,18 @@ void RotaryEncoderChanged(bool clockwise, int id) {
       updatenoiseLevel(1);
       break;
 
-    case 26:
+    case 9:
       if (upperSW) {
-        upperData[P_osc2TriangleLevel] = (upperData[P_osc2TriangleLevel] + speed);
-        upperData[P_osc2TriangleLevel] = constrain(upperData[P_osc2TriangleLevel], 0, 127);
-        osc2TriangleLevelstr = upperData[P_osc2TriangleLevel];
+        upperData[P_osc1TriangleLevel] = (upperData[P_osc1TriangleLevel] + speed);
+        upperData[P_osc1TriangleLevel] = constrain(upperData[P_osc1TriangleLevel], 0, 127);
+        osc1TriangleLevelstr = upperData[P_osc1TriangleLevel];
       } else {
-        lowerData[P_osc2TriangleLevel] = (lowerData[P_osc2TriangleLevel] + speed);
-        lowerData[P_osc2TriangleLevel] = constrain(lowerData[P_osc2TriangleLevel], 0, 127);
-        osc2TriangleLevelstr = lowerData[P_osc2TriangleLevel];
+        lowerData[P_osc1TriangleLevel] = (lowerData[P_osc1TriangleLevel] + speed);
+        lowerData[P_osc1TriangleLevel] = constrain(lowerData[P_osc1TriangleLevel], 0, 127);
+        osc1TriangleLevelstr = lowerData[P_osc1TriangleLevel];
       }
 
-      updateOsc2TriangleLevel(1);
+      updateOsc1TriangleLevel(1);
       break;
 
     case 27:
@@ -1245,6 +1245,20 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         updatedualDetune(1);
       }
       break;
+
+    case 60:
+      if (upperSW) {
+        upperData[P_driftDepth] = (upperData[P_driftDepth] + speed);
+        upperData[P_driftDepth] = constrain(upperData[P_driftDepth], 0, 127);
+        driftDepthstr = upperData[P_driftDepth];
+      } else {
+        lowerData[P_driftDepth] = (lowerData[P_driftDepth] + speed);
+        lowerData[P_driftDepth] = constrain(lowerData[P_driftDepth], 0, 127);
+        driftDepthstr = lowerData[P_driftDepth];
+      }
+
+      updatedriftDepth(1);
+      break;
   }
 
   //rotaryEncoderChanged(id, clockwise, speed);
@@ -1412,6 +1426,13 @@ void mainButtonChanged(Button *btn, bool released) {
       if (!released) {
         panelData[P_vcaGate] = !panelData[P_vcaGate];
         myControlChange(midiChannel, CCvcaGate, panelData[P_vcaGate]);
+      }
+      break;
+
+    case DRIFT_BUTTON:
+      if (!released) {
+        panelData[P_driftSW] = !panelData[P_driftSW];
+        myControlChange(midiChannel, CCdriftSW, panelData[P_driftSW]);
       }
       break;
 
@@ -3505,6 +3526,25 @@ FLASHMEM void updateosc2Detune(boolean announce) {
   }
 }
 
+FLASHMEM void updatedriftDepth(boolean announce) {
+  if (announce) {
+    showCurrentParameterPage("Analogue Drift", int(driftDepthstr));
+    startParameterDisplay();
+  }
+  if (upperSW) {
+    midiCCDCOUpper(CC_DRIFT_DEPTH, upperData[P_driftDepth]);
+    midiCCOut(CCdriftDepth, upperData[P_driftDepth]);
+    midiCCDisplay(CCdriftDepth, upperData[P_driftDepth]);
+  } else {
+    midiCCDCOLower(CC_DRIFT_DEPTH, lowerData[P_driftDepth]);
+    midiCCOut(CCdriftDepth, lowerData[P_driftDepth]);
+    midiCCDisplay(CCdriftDepth, lowerData[P_driftDepth]);
+    if (wholemode) {
+      midiCCDCOUpper(CC_DRIFT_DEPTH, lowerData[P_driftDepth]);
+    }
+  }
+}
+
 FLASHMEM void updatedualDetune(boolean announce) {
   uint8_t v = upperData[P_dualDetune];
   int det = (v < 64) ? ((int)v - 63) : ((int)v - 64);
@@ -3667,40 +3707,40 @@ FLASHMEM void updateOsc1PulseLevel(boolean announce) {
   }
 }
 
-FLASHMEM void updateOsc2TriangleLevel(boolean announce) {
+FLASHMEM void updateOsc1TriangleLevel(boolean announce) {
   if (announce) {
-    showCurrentParameterPage("OSC2 Triangle", int(osc2TriangleLevelstr));
+    showCurrentParameterPage("OSC1 Triangle", int(osc1TriangleLevelstr));
     startParameterDisplay();
   }
   if (upperSW) {
-    midiCCDCOUpper(CC_DCO2_SUB_LEVEL, upperData[P_osc2TriangleLevel]);
-    midiCCOut(CCosc2TriangleLevel, upperData[P_osc2TriangleLevel]);
-    midiCCDisplay(CCosc2TriangleLevel, upperData[P_osc2TriangleLevel]);
+    midiCCDCOUpper(CC_DCO1_TRI_LEVEL, upperData[P_osc1TriangleLevel]);
+    midiCCOut(CCosc1TriangleLevel, upperData[P_osc1TriangleLevel]);
+    midiCCDisplay(CCosc1TriangleLevel, upperData[P_osc1TriangleLevel]);
   } else {
-    midiCCDCOLower(CC_DCO2_SUB_LEVEL, lowerData[P_osc2TriangleLevel]);
-    midiCCOut(CCosc2TriangleLevel, lowerData[P_osc2TriangleLevel]);
-    midiCCDisplay(CCosc2TriangleLevel, lowerData[P_osc2TriangleLevel]);
+    midiCCDCOLower(CC_DCO1_TRI_LEVEL, lowerData[P_osc1TriangleLevel]);
+    midiCCOut(CCosc1TriangleLevel, lowerData[P_osc1TriangleLevel]);
+    midiCCDisplay(CCosc1TriangleLevel, lowerData[P_osc1TriangleLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_SUB_LEVEL, lowerData[P_osc2TriangleLevel]);
+      midiCCDCOUpper(CC_DCO1_TRI_LEVEL, lowerData[P_osc1TriangleLevel]);
     }
   }
 }
 
-FLASHMEM void updateOsc1SubLevel(boolean announce) {
+FLASHMEM void updateosc2SubLevel(boolean announce) {
   if (announce) {
-    showCurrentParameterPage("OSC1 Sub", int(osc1SubLevelstr));
+    showCurrentParameterPage("OSC2 Sub", int(osc2SubLevelstr));
     startParameterDisplay();
   }
   if (upperSW) {
-    midiCCDCOUpper(CC_DCO1_TRI_LEVEL, upperData[P_osc1SubLevel]);
-    midiCCOut(CCosc1SubLevel, upperData[P_osc1SubLevel]);
-    midiCCDisplay(CCosc1SubLevel, upperData[P_osc1SubLevel]);
+    midiCCDCOUpper(CC_DCO2_SUB_LEVEL, upperData[P_osc2SubLevel]);
+    midiCCOut(CCosc2SubLevel, upperData[P_osc2SubLevel]);
+    midiCCDisplay(CCosc2SubLevel, upperData[P_osc2SubLevel]);
   } else {
-    midiCCDCOLower(CC_DCO1_TRI_LEVEL, lowerData[P_osc1SubLevel]);
-    midiCCOut(CCosc1SubLevel, lowerData[P_osc1SubLevel]);
-    midiCCDisplay(CCosc1SubLevel, lowerData[P_osc1SubLevel]);
+    midiCCDCOLower(CC_DCO2_SUB_LEVEL, lowerData[P_osc2SubLevel]);
+    midiCCOut(CCosc2SubLevel, lowerData[P_osc2SubLevel]);
+    midiCCDisplay(CCosc2SubLevel, lowerData[P_osc2SubLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_TRI_LEVEL, lowerData[P_osc1SubLevel]);
+      midiCCDCOUpper(CC_DCO2_SUB_LEVEL, lowerData[P_osc2SubLevel]);
     }
   }
 }
@@ -5082,7 +5122,7 @@ FLASHMEM void updateplayMode(boolean announce) {
     wholemode = false;
     dualmode = true;
     splitmode = false;
-    
+
   } else if (playMode == 2) {
     if (announce) {
       showCurrentParameterPage("Key Mode", "Split");
@@ -7072,6 +7112,52 @@ FLASHMEM void updateMonoMulti(boolean announce) {
   }
 }
 
+FLASHMEM void updatedriftSW(boolean announce) {
+  if (upperSW) {
+    if (!upperData[P_driftSW]) {
+      if (announce) {
+        showCurrentParameterPage("Analogue Drift", "Off");
+        startParameterDisplay();
+      }
+      midiCCDCOUpper(CC_DRIFT_SW, 0);
+      midiCCOut(CCdriftSW, 0);
+      mcp2.digitalWrite(DRIFT_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("Analogue Drift", "On");
+        startParameterDisplay();
+      }
+      midiCCDCOUpper(CC_DRIFT_SW, 127);
+      midiCCOut(CCdriftSW, 127);
+      mcp2.digitalWrite(DRIFT_LED, HIGH);
+    }
+  } else {
+    if (!lowerData[P_driftSW]) {
+      if (announce) {
+        showCurrentParameterPage("Analogue Drift", "Off");
+        startParameterDisplay();
+      }
+      midiCCDCOLower(CC_DRIFT_SW, 0);
+      midiCCOut(CCdriftSW, 0);
+      if (wholemode) {
+        midiCCDCOUpper(CC_DRIFT_SW, 0);
+      }
+      mcp2.digitalWrite(DRIFT_LED, LOW);
+    } else {
+      if (announce) {
+        showCurrentParameterPage("Analogue Drift", "On");
+        startParameterDisplay();
+      }
+      midiCCDCOLower(CC_DRIFT_SW, 127);
+      midiCCOut(CCdriftSW, 127);
+      if (wholemode) {
+        midiCCDCOUpper(CC_DRIFT_SW, 127);
+      }
+      mcp2.digitalWrite(DRIFT_LED, HIGH);
+    }
+  }
+}
+
 FLASHMEM void updateLFO1retrig(boolean announce) {
   if (upperSW) {
     if (!upperData[P_lfo1retrig]) {
@@ -7272,6 +7358,16 @@ void myControlChange(byte channel, byte control, int value) {
       updateunisonDetune(1);
       break;
 
+    case CCdriftDepth:
+      if (upperSW) {
+        upperData[P_driftDepth] = value;       
+      } else {
+        lowerData[P_driftDepth] = value;
+      }
+      driftDepthstr = value;
+      updatedriftDepth(1);
+      break;
+
     case CCosc2Interval:
       if (upperSW) {
         upperData[P_osc2Interval] = value;
@@ -7342,24 +7438,24 @@ void myControlChange(byte channel, byte control, int value) {
       updateOsc1PulseLevel(1);
       break;
 
-    case CCosc2TriangleLevel:
+    case CCosc1TriangleLevel:
       if (upperSW) {
-        upperData[P_osc2TriangleLevel] = value;
+        upperData[P_osc1TriangleLevel] = value;
       } else {
-        lowerData[P_osc2TriangleLevel] = value;
+        lowerData[P_osc1TriangleLevel] = value;
       }
-      osc2TriangleLevelstr = value;  // for display
-      updateOsc2TriangleLevel(1);
+      osc1TriangleLevelstr = value;  // for display
+      updateOsc1TriangleLevel(1);
       break;
 
-    case CCosc1SubLevel:
+    case CCosc2SubLevel:
       if (upperSW) {
-        upperData[P_osc1SubLevel] = value;
+        upperData[P_osc2SubLevel] = value;
       } else {
-        lowerData[P_osc1SubLevel] = value;
+        lowerData[P_osc2SubLevel] = value;
       }
-      osc1SubLevelstr = value;  // for display
-      updateOsc1SubLevel(1);
+      osc2SubLevelstr = value;  // for display
+      updateosc2SubLevel(1);
       break;
 
     case CCosc2EnvDepth:
@@ -7984,6 +8080,15 @@ void myControlChange(byte channel, byte control, int value) {
       updatevcaGate(1);
       break;
 
+    case CCdriftSW:
+      if (upperSW) {
+        upperData[P_driftSW] = !upperData[P_driftSW];
+      } else {
+        lowerData[P_driftSW] = !lowerData[P_driftSW];
+      }
+      updatedriftSW(1);
+      break;
+
     case CCmonoMulti:
       if (upperSW) {
         upperData[P_monoMulti] = !upperData[P_monoMulti];
@@ -8229,10 +8334,10 @@ void recallPatch(int patchNo) {
 }
 
 void setCurrentPatchData(String data[]) {
-  int tempData[110];  // Temporary array for converted integers
+  int tempData[112];  // Temporary array for converted integers
 
   // Convert data from String to int once
-  for (int i = 1; i <= 105; i++) {
+  for (int i = 1; i <= 107; i++) {
     tempData[i] = data[i].toInt();
   }
 
@@ -8276,13 +8381,13 @@ void upperParamsToDisplay() {
   updateosc1PWM(0);
   updateOsc1SawLevel(0);
   updateOsc1PulseLevel(0);
-  updateOsc1SubLevel(0);
+  updateosc2SubLevel(0);
   updatefmDepth(0);
   updateosc2PW(0);
   updateosc2PWM(0);
   updateOsc2SawLevel(0);
   updateOsc2PulseLevel(0);
-  updateOsc2TriangleLevel(0);
+  updateOsc1TriangleLevel(0);
   updateosc2Detune(0);
   updateosc2Interval(0);
   updateOsc2EnvDepth(0);
@@ -8334,6 +8439,7 @@ void upperParamsToDisplay() {
   updateosc2envPWM(0);
   updatedualDetune(0);
   updateunisonDetune(0);
+  updatedriftDepth(0);
 }
 
 void lowerParamsToDisplay() {
@@ -8343,13 +8449,13 @@ void lowerParamsToDisplay() {
   updateosc1PWM(0);
   updateOsc1SawLevel(0);
   updateOsc1PulseLevel(0);
-  updateOsc1SubLevel(0);
+  updateosc2SubLevel(0);
   updatefmDepth(0);
   updateosc2PW(0);
   updateosc2PWM(0);
   updateOsc2SawLevel(0);
   updateOsc2PulseLevel(0);
-  updateOsc2TriangleLevel(0);
+  updateOsc1TriangleLevel(0);
   updateosc2Detune(0);
   updateosc2Interval(0);
   updateOsc2EnvDepth(0);
@@ -8401,6 +8507,7 @@ void lowerParamsToDisplay() {
   updateosc2envPWM(0);
   updatedualDetune(0);
   updateunisonDetune(0);
+  updatedriftDepth(0);
 }
 
 void setAllButtons() {
@@ -8431,6 +8538,7 @@ void setAllButtons() {
   updateenv2_env3_adsr(0);
   updatenoiseSrc(0);
   updateArpLEDs();
+  updatedriftSW(0);
 }
 
 String getCurrentPatchData() {
@@ -8449,8 +8557,8 @@ String getCurrentPatchData() {
            + "," + String(upperData[P_filterLevel2]) + "," + String(upperData[P_monoMulti]) + "," + String(upperData[P_modWheelLevel]) + "," + String(upperData[P_PitchBendLevel])
            + "," + String(upperData[P_amDepth]) + "," + String(upperData[P_sync]) + "," + String(upperData[P_effectPot1]) + "," + String(upperData[P_effectPot2]) + "," + String(upperData[P_effectPot3])
            + "," + String(upperData[P_oldampAttack]) + "," + String(upperData[P_oldampDecay]) + "," + String(upperData[P_oldampSustain]) + "," + String(upperData[P_oldampRelease])
-           + "," + String(upperData[P_AfterTouchDest]) + "," + String(upperData[P_filterLogLin]) + "," + String(upperData[P_ampLogLin]) + "," + String(upperData[P_osc2TriangleLevel])
-           + "," + String(upperData[P_osc1SubLevel]) + "," + String(upperData[P_keyboardMode]) + "," + String(upperData[P_LFO1Delay]) + "," + String(upperData[P_effectNum]) + "," + String(upperData[P_effectBank])
+           + "," + String(upperData[P_AfterTouchDest]) + "," + String(upperData[P_filterLogLin]) + "," + String(upperData[P_ampLogLin]) + "," + String(upperData[P_osc1TriangleLevel])
+           + "," + String(upperData[P_osc2SubLevel]) + "," + String(upperData[P_keyboardMode]) + "," + String(upperData[P_LFO1Delay]) + "," + String(upperData[P_effectNum]) + "," + String(upperData[P_effectBank])
            + "," + String(upperData[P_LFO1Slope]) + "," + String(upperData[P_LFO3Rate]) + "," + String(upperData[P_lfoMultiplier]) + "," + String(upperData[P_NotePriority]) + "," + String(upperData[P_keytrackSW])
            + "," + String(upperData[P_ATDepth]) + "," + String(upperData[P_pitchAttack]) + "," + String(upperData[P_pitchDecay]) + "," + String(upperData[P_pitchSustain]) + "," + String(upperData[P_pitchRelease])
            + "," + String(upperData[P_LFO3Delay]) + "," + String(upperData[P_osc1sawDetune]) + "," + String(upperData[P_osc1sawCount]) + "," + String(upperData[P_arpRate])
@@ -8459,7 +8567,7 @@ String getCurrentPatchData() {
            + "," + String(upperData[P_arpStartStop]) + "," + String(upperData[P_arpRange]) + "," + String(upperData[P_arpMode]) + "," + String(upperData[P_arpLatch])
            + "," + String(upperData[P_vcfATDepth]) + "," + String(upperData[P_fx_Bypass]) + "," + String(upperData[P_unisonDetune]) + "," + String(upperData[P_dualDetune])
            + "," + String(upperData[P_env2_env3_adsr]) + "," + String(upperData[P_env1_adsr]) + "," + String(upperData[P_env1_punch]) + "," + String(upperData[P_env2_punch])
-           + "," + String(upperData[P_env3_punch]);
+           + "," + String(upperData[P_env3_punch]) + "," + String(upperData[P_driftDepth]) + "," + String(upperData[P_driftSW]);
 
   } else {
     return patchNameL + "," + String(lowerData[P_LFO2Rate]) + "," + String(lowerData[P_fmDepth]) + "," + String(lowerData[P_osc2PW]) + "," + String(lowerData[P_osc2PWM])
@@ -8476,8 +8584,8 @@ String getCurrentPatchData() {
            + "," + String(lowerData[P_filterLevel2]) + "," + String(lowerData[P_monoMulti]) + "," + String(lowerData[P_modWheelLevel]) + "," + String(lowerData[P_PitchBendLevel])
            + "," + String(lowerData[P_amDepth]) + "," + String(lowerData[P_sync]) + "," + String(lowerData[P_effectPot1]) + "," + String(lowerData[P_effectPot2]) + "," + String(lowerData[P_effectPot3])
            + "," + String(lowerData[P_oldampAttack]) + "," + String(lowerData[P_oldampDecay]) + "," + String(lowerData[P_oldampSustain]) + "," + String(lowerData[P_oldampRelease])
-           + "," + String(lowerData[P_AfterTouchDest]) + "," + String(lowerData[P_filterLogLin]) + "," + String(lowerData[P_ampLogLin]) + "," + String(lowerData[P_osc2TriangleLevel])
-           + "," + String(lowerData[P_osc1SubLevel]) + "," + String(lowerData[P_keyboardMode]) + "," + String(lowerData[P_LFO1Delay]) + "," + String(lowerData[P_effectNum]) + "," + String(lowerData[P_effectBank])
+           + "," + String(lowerData[P_AfterTouchDest]) + "," + String(lowerData[P_filterLogLin]) + "," + String(lowerData[P_ampLogLin]) + "," + String(lowerData[P_osc1TriangleLevel])
+           + "," + String(lowerData[P_osc2SubLevel]) + "," + String(lowerData[P_keyboardMode]) + "," + String(lowerData[P_LFO1Delay]) + "," + String(lowerData[P_effectNum]) + "," + String(lowerData[P_effectBank])
            + "," + String(lowerData[P_LFO1Slope]) + "," + String(lowerData[P_LFO3Rate]) + "," + String(lowerData[P_lfoMultiplier]) + "," + String(lowerData[P_NotePriority]) + "," + String(lowerData[P_keytrackSW])
            + "," + String(lowerData[P_ATDepth]) + "," + String(lowerData[P_pitchAttack]) + "," + String(lowerData[P_pitchDecay]) + "," + String(lowerData[P_pitchSustain]) + "," + String(lowerData[P_pitchRelease])
            + "," + String(lowerData[P_LFO3Delay]) + "," + String(lowerData[P_osc1sawDetune]) + "," + String(lowerData[P_osc1sawCount]) + "," + String(lowerData[P_arpRate])
@@ -8486,7 +8594,7 @@ String getCurrentPatchData() {
            + "," + String(lowerData[P_arpStartStop]) + "," + String(lowerData[P_arpRange]) + "," + String(lowerData[P_arpMode]) + "," + String(lowerData[P_arpLatch])
            + "," + String(lowerData[P_vcfATDepth]) + "," + String(lowerData[P_fx_Bypass]) + "," + String(lowerData[P_unisonDetune]) + "," + String(lowerData[P_dualDetune])
            + "," + String(lowerData[P_env2_env3_adsr]) + "," + String(lowerData[P_env1_adsr]) + "," + String(lowerData[P_env1_punch]) + "," + String(lowerData[P_env2_punch])
-           + "," + String(lowerData[P_env3_punch]);
+           + "," + String(lowerData[P_env3_punch]) + "," + String(lowerData[P_driftDepth]) + "," + String(lowerData[P_driftSW]);
   }
 }
 

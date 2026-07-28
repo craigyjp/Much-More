@@ -74,6 +74,7 @@
 #define ENV1_PUNCH_BUTTON 48
 #define ENV2_3_ADSR_BUTTON 49
 #define ENV1_ADSR_BUTTON 50
+#define DRIFT_BUTTON 51
 
 
 // Pins for MCP23017
@@ -191,6 +192,7 @@ RotaryEncOverMCP rotaryEncoders[] = {
   RotaryEncOverMCP(&mcp2, 10, 9, &RotaryEncoderChanged, 58),
 
   RotaryEncOverMCP(&mcp2, 12, 11, &RotaryEncoderChanged, 59),
+  RotaryEncOverMCP(&mcp2, 14, 13, &RotaryEncoderChanged, 60),
 
 };
 
@@ -226,6 +228,7 @@ Button poly1_Button = Button(&mcp3, 11, POLY1_BUTTON, &mainButtonChanged);
 
 Button glide_Button = Button(&mcp4, 0, GLIDE_BUTTON, &mainButtonChanged);
 Button priority_Button = Button(&mcp4, 1, PRIORITY_BUTTON, &mainButtonChanged);
+Button drift_Button = Button(&mcp4, 9, DRIFT_BUTTON, &mainButtonChanged);
 
 Button dco_at_Button = Button(&mcp5, 10, DCO_AT_BUTTON, &mainButtonChanged);
 Button dco1_oct_Button = Button(&mcp5, 11, DCO1_OCT_BUTTON, &mainButtonChanged);
@@ -320,6 +323,7 @@ Button *mainButtons[] = {
   &vca_env_punch_Button,
   &env1_adsr_Button,
   &env2_3_adsr_Button,
+  &drift_Button,
 };
 
 Button *allButtons[] = {
@@ -374,6 +378,7 @@ Button *allButtons[] = {
   &vca_env_punch_Button,
   &env1_adsr_Button,
   &env2_3_adsr_Button,
+  &drift_Button,
 };
 
 // MCP LEDS
@@ -391,7 +396,7 @@ Button *allButtons[] = {
 // GP2
 #define ARP_LATCH_LED 6
 #define ARP_START_STOP_LED 7
-
+#define DRIFT_LED 15
 
 // GP3
 #define LOWER_LED 4
@@ -528,6 +533,7 @@ void setupHardware() {
 
   mcp2.pinMode(6, OUTPUT);   // pin 7 = GPA7 of MCP2301X
   mcp2.pinMode(7, OUTPUT);  // pin 15 = GPB7 of MCP2301X
+  mcp2.pinMode(15, OUTPUT);  // pin 15 = GPB7 of MCP2301X
 
   mcp3.pinMode(4, OUTPUT);   // pin 7 = GPA7 of MCP2301X
   mcp3.pinMode(5, OUTPUT);  // pin 15 = GPB7 of MCP2301X

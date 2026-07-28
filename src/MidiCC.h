@@ -58,8 +58,8 @@
 #define   CCampAttack 58
 #define   CCampSustain 59
 #define   CCampDecay 60
-#define   CCosc2TriangleLevel 61
-#define   CCosc1SubLevel 62
+#define   CCosc1TriangleLevel 61
+#define   CCosc2SubLevel 62
 #define   CCLFO1Delay 63
 
 #define   CCglideSW 65
@@ -115,7 +115,8 @@
 #define   CCarpLatch 116
 #define   CCarpMode 117
 #define   CCarpRange 118
-
+#define   CCdriftDepth 119
+#define   CCdriftSW 120
 
 #define   CCallnotesoff 123//Panic button
 
@@ -194,6 +195,8 @@
 #define CC_FV1_INTERNAL     67
 #define CC_ENV_DCO1_PWM     50  /* envelope -> DCO1 PWM depth          */
 #define CC_ENV_DCO2_PWM     51  /* envelope -> DCO2 PWM depth          */
+#define CC_DRIFT_SW       71  /* analog drift on/off (>=64=on)  */
+#define CC_DRIFT_DEPTH    72  /* analog drift depth, 0 = none   */
 
 // CC voice board params.
 

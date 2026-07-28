@@ -34,7 +34,7 @@ bool chordHoldCaptureWindowActive = false;
 
 // adding encoders
 bool rotaryEncoderChanged(int id, bool clockwise, int speed);
-#define NUM_ENCODERS 59
+#define NUM_ENCODERS 60
 unsigned long lastTransition[NUM_ENCODERS + 1];
 boolean accelerate = true;
 int speed = 1;
@@ -42,9 +42,9 @@ int value = 0;
 float lastSpeed[NUM_ENCODERS + 1] = { 0 }; // Or whatever your encoder count is
 bool halfStepMode = false;
 
-int upperData[110];
-int lowerData[110];
-int panelData[110];
+int upperData[112];
+int lowerData[112];
+int panelData[112];
 
 #define P_sysex 0
 #define P_LFO2Rate 1
@@ -109,8 +109,8 @@ int panelData[110];
 #define P_AfterTouchDest 60
 #define P_filterLogLin 61
 #define P_ampLogLin 62
-#define P_osc2TriangleLevel 63
-#define P_osc1SubLevel 64
+#define P_osc1TriangleLevel 63
+#define P_osc2SubLevel 64
 #define P_keyboardMode 65
 #define P_LFO1Delay 66
 #define P_effectNum 67
@@ -151,6 +151,8 @@ int panelData[110];
 #define P_env1_punch 102
 #define P_env2_punch 103
 #define P_env3_punch 104
+#define P_driftDepth 105
+#define P_driftSW 106
 
 int playMode = 0;
 int lowerSplitVoicePointer = 0;
@@ -232,8 +234,8 @@ int osc2SawLevelstr = 0;
 int osc1SawLevelstr = 0;
 int osc2PulseLevelstr = 0;
 int osc1PulseLevelstr = 0;
-int osc2TriangleLevelstr = 0;
-int osc1SubLevelstr = 0;
+int osc1TriangleLevelstr = 0;
+int osc2SubLevelstr = 0;
 float filterCutoffstr = 0;
 int filterLFOstr = 0;
 int filterResstr = 0;
@@ -276,6 +278,7 @@ int LFO3Waveformstr = 0;
 int LFO2Waveformstr = 0;
 int osc2envDepthstr = 0;
 int unisonDetunestr = 0;
+int driftDepthstr = 0;
 
 boolean wholemode = true;
 boolean dualmode = false;
