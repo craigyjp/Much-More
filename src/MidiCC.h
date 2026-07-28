@@ -111,6 +111,11 @@
 #define   CCenv2_env3_adsr 112
 #define   CCdualDetune 113
 #define   CCunisonDetune 114
+#define   CCarpStartStop 115
+#define   CCarpLatch 116
+#define   CCarpMode 117
+#define   CCarpRange 118
+
 
 #define   CCallnotesoff 123//Panic button
 

@@ -97,16 +97,6 @@ int orderIndxWhole = 0, orderIndxLower = 0, orderIndxUpper = 0;
 int voiceAssignmentLower[128];
 int voiceAssignmentUpper[128];
 
-// ============================== ARPEGGIATOR ==============================
-// New parameter slots (kept here so the sketch compiles even if they are
-// not yet added to Parameters.h; move them there if you prefer).
-#ifndef P_arpStartStop
-#define P_arpStartStop 90
-#define P_arpLatch 91
-#define P_arpRange 92
-#define P_arpMode 93
-#endif
-
 // arp mode values (match the values your mode buttons write into P_arpMode)
 enum ArpMode { ARP_OFF = 0,
                ARP_UP = 1,
@@ -307,14 +297,14 @@ void setup() {
   MIDI.turnThruOn(midi::Thru::Mode::Off);
   Serial.println("MIDI In DIN Listening");
 
-  MIDI8.begin();
-  MIDI8.turnThruOn(midi::Thru::Mode::Off);
+  MIDI6.begin();
+  MIDI6.turnThruOn(midi::Thru::Mode::Off);
 
   MIDI7.begin();
   MIDI7.turnThruOn(midi::Thru::Mode::Off);
 
-  MIDI6.begin();
-  MIDI6.turnThruOn(midi::Thru::Mode::Off);
+  MIDI8.begin();
+  MIDI8.turnThruOn(midi::Thru::Mode::Off);
 
   //Read Aftertouch from EEPROM, this can be set individually by each patch.
   upperData[P_AfterTouchDest] = getAfterTouchU();
@@ -448,9 +438,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_glideTime] = (lowerData[P_glideTime] + speed);
         lowerData[P_glideTime] = constrain(lowerData[P_glideTime], 0, 127);
         glideTimestr = LINEAR[lowerData[P_glideTime]];
-        if (wholemode) {
-          upperData[P_glideTime] = lowerData[P_glideTime];
-        }
       }
 
       updateglideTime(1);
@@ -465,9 +452,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1PWM] = (lowerData[P_osc1PWM] + speed);
         lowerData[P_osc1PWM] = constrain(lowerData[P_osc1PWM], 0, 127);
         osc1PWMstr = lowerData[P_osc1PWM];
-        if (wholemode) {
-          upperData[P_osc1PWM] = lowerData[P_osc1PWM];
-        }
       }
 
       updateosc1PWM(1);
@@ -482,9 +466,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1envPWM] = (lowerData[P_osc1envPWM] + speed);
         lowerData[P_osc1envPWM] = constrain(lowerData[P_osc1envPWM], 0, 127);
         osc1PWMstr = lowerData[P_osc1envPWM];
-        if (wholemode) {
-          upperData[P_osc1envPWM] = lowerData[P_osc1envPWM];
-        }
       }
 
       updateosc1envPWM(1);
@@ -499,9 +480,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1sawDetune] = (lowerData[P_osc1sawDetune] + speed);
         lowerData[P_osc1sawDetune] = constrain(lowerData[P_osc1sawDetune], 0, 127);
         osc1sawDetunestr = lowerData[P_osc1sawDetune];
-        if (wholemode) {
-          upperData[P_osc1sawDetune] = lowerData[P_osc1sawDetune];
-        }
       }
 
       updateosc1sawDetune(1);
@@ -516,9 +494,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1PW] = (lowerData[P_osc1PW] + speed);
         lowerData[P_osc1PW] = constrain(lowerData[P_osc1PW], 0, 127);
         osc1PWstr = PULSEWIDTH[lowerData[P_osc1PW]];
-        if (wholemode) {
-          upperData[P_osc1PW] = lowerData[P_osc1PW];
-        }
       }
 
       updateosc1PW(1);
@@ -533,9 +508,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1SawLevel] = (lowerData[P_osc1SawLevel] + speed);
         lowerData[P_osc1SawLevel] = constrain(lowerData[P_osc1SawLevel], 0, 127);
         osc1SawLevelstr = lowerData[P_osc1SawLevel];
-        if (wholemode) {
-          upperData[P_osc1SawLevel] = lowerData[P_osc1SawLevel];
-        }
       }
 
       updateOsc1SawLevel(1);
@@ -550,9 +522,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1PulseLevel] = (lowerData[P_osc1PulseLevel] + speed);
         lowerData[P_osc1PulseLevel] = constrain(lowerData[P_osc1PulseLevel], 0, 127);
         osc1PulseLevelstr = lowerData[P_osc1PulseLevel];
-        if (wholemode) {
-          upperData[P_osc1PulseLevel] = lowerData[P_osc1PulseLevel];
-        }
       }
 
       updateOsc1PulseLevel(1);
@@ -567,9 +536,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1SubLevel] = (lowerData[P_osc1SubLevel] + speed);
         lowerData[P_osc1SubLevel] = constrain(lowerData[P_osc1SubLevel], 0, 127);
         osc1SubLevelstr = lowerData[P_osc1SubLevel];
-        if (wholemode) {
-          upperData[P_osc1SubLevel] = lowerData[P_osc1SubLevel];
-        }
       }
 
       updateOsc1SubLevel(1);
@@ -584,10 +550,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc1sawCount] = (lowerData[P_osc1sawCount] + speed);
         lowerData[P_osc1sawCount] = constrain(lowerData[P_osc1sawCount], 0, 127);
         osc1sawCountstr = map(lowerData[P_osc1sawCount], 0, 127, 1, 5);
-        ;
-        if (wholemode) {
-          upperData[P_osc1sawCount] = lowerData[P_osc1sawCount];
-        }
       }
 
       updateosc1sawCount(1);
@@ -602,9 +564,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2PW] = (lowerData[P_osc2PW] + speed);
         lowerData[P_osc2PW] = constrain(lowerData[P_osc2PW], 0, 127);
         osc2PWstr = PULSEWIDTH[lowerData[P_osc2PW]];
-        if (wholemode) {
-          upperData[P_osc2PW] = lowerData[P_osc2PW];
-        }
       }
 
       updateosc2PW(1);
@@ -619,9 +578,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2SawLevel] = (lowerData[P_osc2SawLevel] + speed);
         lowerData[P_osc2SawLevel] = constrain(lowerData[P_osc2SawLevel], 0, 127);
         osc2SawLevelstr = lowerData[P_osc2SawLevel];
-        if (wholemode) {
-          upperData[P_osc2SawLevel] = lowerData[P_osc2SawLevel];
-        }
       }
 
       updateOsc2SawLevel(1);
@@ -636,9 +592,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2PulseLevel] = (lowerData[P_osc2PulseLevel] + speed);
         lowerData[P_osc2PulseLevel] = constrain(lowerData[P_osc2PulseLevel], 0, 127);
         osc2PulseLevelstr = lowerData[P_osc2PulseLevel];
-        if (wholemode) {
-          upperData[P_osc2PulseLevel] = lowerData[P_osc2PulseLevel];
-        }
       }
 
       updateOsc2PulseLevel(1);
@@ -653,9 +606,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2Interval] = (lowerData[P_osc2Interval] + speed);
         lowerData[P_osc2Interval] = constrain(lowerData[P_osc2Interval], 0, 127);
         osc2Intervalstr = lowerData[P_osc2Interval];
-        if (wholemode) {
-          upperData[P_osc2Interval] = lowerData[P_osc2Interval];
-        }
       }
 
       updateosc2Interval(1);
@@ -670,9 +620,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2PWM] = (lowerData[P_osc2PWM] + speed);
         lowerData[P_osc2PWM] = constrain(lowerData[P_osc2PWM], 0, 127);
         osc2PWMstr = lowerData[P_osc2PWM];
-        if (wholemode) {
-          upperData[P_osc2PWM] = lowerData[P_osc2PWM];
-        }
       }
 
       updateosc2PWM(1);
@@ -687,9 +634,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2envPWM] = (lowerData[P_osc2envPWM] + speed);
         lowerData[P_osc2envPWM] = constrain(lowerData[P_osc2envPWM], 0, 127);
         osc2PWMstr = lowerData[P_osc2envPWM];
-        if (wholemode) {
-          upperData[P_osc2envPWM] = lowerData[P_osc2envPWM];
-        }
       }
 
       updateosc2envPWM(1);
@@ -704,9 +648,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2Detune] = (lowerData[P_osc2Detune] + speed);
         lowerData[P_osc2Detune] = constrain(lowerData[P_osc2Detune], 0, 127);
         osc2Detunestr = lowerData[P_osc2Detune];
-        if (wholemode) {
-          upperData[P_osc2Detune] = lowerData[P_osc2Detune];
-        }
       }
 
       updateosc2Detune(1);
@@ -721,9 +662,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterLevel1] = (lowerData[P_filterLevel1] + speed);
         lowerData[P_filterLevel1] = constrain(lowerData[P_filterLevel1], 0, 127);
         filterLevel1str = lowerData[P_filterLevel1];
-        if (wholemode) {
-          upperData[P_filterLevel1] = lowerData[P_filterLevel1];
-        }
       }
 
       updatefilterLevel1(1);
@@ -738,9 +676,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterCutoff] = (lowerData[P_filterCutoff] + speed);
         lowerData[P_filterCutoff] = constrain(lowerData[P_filterCutoff], 0, 127);
         filterCutoffstr = FILTERCUTOFF[lowerData[P_filterCutoff]];
-        if (wholemode) {
-          upperData[P_filterCutoff] = lowerData[P_filterCutoff];
-        }
       }
 
       updateFilterCutoff(1);
@@ -755,9 +690,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterRes] = (lowerData[P_filterRes] + speed);
         lowerData[P_filterRes] = constrain(lowerData[P_filterRes], 0, 127);
         filterResstr = lowerData[P_filterRes];
-        if (wholemode) {
-          upperData[P_filterRes] = lowerData[P_filterRes];
-        }
       }
 
       updatefilterRes(1);
@@ -772,9 +704,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterLevel2] = (lowerData[P_filterLevel2] + speed);
         lowerData[P_filterLevel2] = constrain(lowerData[P_filterLevel2], 0, 127);
         filterLevel2str = lowerData[P_filterLevel2];
-        if (wholemode) {
-          upperData[P_filterLevel2] = lowerData[P_filterLevel2];
-        }
       }
 
       updatefilterLevel2(1);
@@ -789,9 +718,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_keytrack] = (lowerData[P_keytrack] + speed);
         lowerData[P_keytrack] = constrain(lowerData[P_keytrack], 0, 127);
         keytrackstr = lowerData[P_keytrack];
-        if (wholemode) {
-          upperData[P_keytrack] = lowerData[P_keytrack];
-        }
       }
 
       updatekeytrack(1);
@@ -806,9 +732,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterEGlevel] = (lowerData[P_filterEGlevel] + speed);
         lowerData[P_filterEGlevel] = constrain(lowerData[P_filterEGlevel], 0, 127);
         filterEGlevelstr = lowerData[P_filterEGlevel];
-        if (wholemode) {
-          upperData[P_filterEGlevel] = lowerData[P_filterEGlevel];
-        }
       }
 
       updatefilterEGlevel(1);
@@ -823,9 +746,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterLFO] = (lowerData[P_filterLFO] + speed);
         lowerData[P_filterLFO] = constrain(lowerData[P_filterLFO], 0, 127);
         filterLFOstr = lowerData[P_filterLFO];
-        if (wholemode) {
-          upperData[P_filterLFO] = lowerData[P_filterLFO];
-        }
       }
 
       updatefilterLFO(1);
@@ -840,9 +760,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_noiseLevel] = (lowerData[P_noiseLevel] + speed);
         lowerData[P_noiseLevel] = constrain(lowerData[P_noiseLevel], 0, 127);
         noiseLevelstr = lowerData[P_noiseLevel];
-        if (wholemode) {
-          upperData[P_noiseLevel] = lowerData[P_noiseLevel];
-        }
       }
 
       updatenoiseLevel(1);
@@ -857,9 +774,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2TriangleLevel] = (lowerData[P_osc2TriangleLevel] + speed);
         lowerData[P_osc2TriangleLevel] = constrain(lowerData[P_osc2TriangleLevel], 0, 127);
         osc2TriangleLevelstr = lowerData[P_osc2TriangleLevel];
-        if (wholemode) {
-          upperData[P_osc2TriangleLevel] = lowerData[P_osc2TriangleLevel];
-        }
       }
 
       updateOsc2TriangleLevel(1);
@@ -874,9 +788,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_pitchAttack] = (lowerData[P_pitchAttack] + speed);
         lowerData[P_pitchAttack] = constrain(lowerData[P_pitchAttack], 0, 127);
         pitchAttackstr = ENVTIMES[lowerData[P_pitchAttack]];
-        if (wholemode) {
-          upperData[P_pitchAttack] = lowerData[P_pitchAttack];
-        }
       }
 
       updatepitchAttack(1);
@@ -891,9 +802,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_pitchDecay] = (lowerData[P_pitchDecay] + speed);
         lowerData[P_pitchDecay] = constrain(lowerData[P_pitchDecay], 0, 127);
         pitchDecaystr = ENVTIMES[lowerData[P_pitchDecay]];
-        if (wholemode) {
-          upperData[P_pitchDecay] = lowerData[P_pitchDecay];
-        }
       }
 
       updatepitchDecay(1);
@@ -908,9 +816,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_pitchSustain] = (lowerData[P_pitchSustain] + speed);
         lowerData[P_pitchSustain] = constrain(lowerData[P_pitchSustain], 0, 127);
         pitchSustainstr = LINEAR_FILTERMIXERSTR[lowerData[P_pitchSustain]];
-        if (wholemode) {
-          upperData[P_pitchSustain] = lowerData[P_pitchSustain];
-        }
       }
 
       updatepitchSustain(1);
@@ -925,9 +830,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_pitchRelease] = (lowerData[P_pitchRelease] + speed);
         lowerData[P_pitchRelease] = constrain(lowerData[P_pitchRelease], 0, 127);
         pitchReleasestr = ENVTIMES[lowerData[P_pitchRelease]];
-        if (wholemode) {
-          upperData[P_pitchRelease] = lowerData[P_pitchRelease];
-        }
       }
 
       updatepitchRelease(1);
@@ -942,9 +844,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_ampAttack] = (lowerData[P_ampAttack] + speed);
         lowerData[P_ampAttack] = constrain(lowerData[P_ampAttack], 0, 127);
         ampAttackstr = ENVTIMES[lowerData[P_ampAttack]];
-        if (wholemode) {
-          upperData[P_ampAttack] = lowerData[P_ampAttack];
-        }
       }
 
       updateampAttack(1);
@@ -959,9 +858,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_ampDecay] = (lowerData[P_ampDecay] + speed);
         lowerData[P_ampDecay] = constrain(lowerData[P_ampDecay], 0, 127);
         ampDecaystr = ENVTIMES[lowerData[P_ampDecay]];
-        if (wholemode) {
-          upperData[P_ampDecay] = lowerData[P_ampDecay];
-        }
       }
 
       updateampDecay(1);
@@ -976,9 +872,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterRelease] = (lowerData[P_filterRelease] + speed);
         lowerData[P_filterRelease] = constrain(lowerData[P_filterRelease], 0, 127);
         filterReleasestr = ENVTIMES[lowerData[P_filterRelease]];
-        if (wholemode) {
-          upperData[P_filterRelease] = lowerData[P_filterRelease];
-        }
       }
 
       updatefilterRelease(1);
@@ -993,9 +886,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterSustain] = (lowerData[P_filterSustain] + speed);
         lowerData[P_filterSustain] = constrain(lowerData[P_filterSustain], 0, 127);
         filterSustainstr = LINEAR_FILTERMIXERSTR[lowerData[P_filterSustain]];
-        if (wholemode) {
-          upperData[P_filterSustain] = lowerData[P_filterSustain];
-        }
       }
 
       updatefilterSustain(1);
@@ -1010,9 +900,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterDecay] = (lowerData[P_filterDecay] + speed);
         lowerData[P_filterDecay] = constrain(lowerData[P_filterDecay], 0, 127);
         filterDecaystr = ENVTIMES[lowerData[P_filterDecay]];
-        if (wholemode) {
-          upperData[P_filterDecay] = lowerData[P_filterDecay];
-        }
       }
 
       updatefilterDecay(1);
@@ -1027,9 +914,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_filterAttack] = (lowerData[P_filterAttack] + speed);
         lowerData[P_filterAttack] = constrain(lowerData[P_filterAttack], 0, 127);
         filterAttackstr = ENVTIMES[lowerData[P_filterAttack]];
-        if (wholemode) {
-          upperData[P_filterAttack] = lowerData[P_filterAttack];
-        }
       }
 
       updatefilterAttack(1);
@@ -1044,9 +928,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_ampSustain] = (lowerData[P_ampSustain] + speed);
         lowerData[P_ampSustain] = constrain(lowerData[P_ampSustain], 0, 127);
         ampSustainstr = LINEAR_FILTERMIXERSTR[lowerData[P_ampSustain]];
-        if (wholemode) {
-          upperData[P_ampSustain] = lowerData[P_ampSustain];
-        }
       }
 
       updateampSustain(1);
@@ -1061,9 +942,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_ampRelease] = (lowerData[P_ampRelease] + speed);
         lowerData[P_ampRelease] = constrain(lowerData[P_ampRelease], 0, 127);
         ampReleasestr = ENVTIMES[lowerData[P_ampRelease]];
-        if (wholemode) {
-          upperData[P_ampRelease] = lowerData[P_ampRelease];
-        }
       }
 
       updateampRelease(1);
@@ -1078,9 +956,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_ATDepth] = (lowerData[P_ATDepth] + speed);
         lowerData[P_ATDepth] = constrain(lowerData[P_ATDepth], 0, 127);
         ATDepthstr = lowerData[P_ATDepth];
-        if (wholemode) {
-          upperData[P_ATDepth] = lowerData[P_ATDepth];
-        }
       }
 
       updateATDepth(1);
@@ -1095,9 +970,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_fmDepth] = (lowerData[P_fmDepth] + speed);
         lowerData[P_fmDepth] = constrain(lowerData[P_fmDepth], 0, 127);
         fmDepthstr = lowerData[P_fmDepth];
-        if (wholemode) {
-          upperData[P_fmDepth] = lowerData[P_fmDepth];
-        }
       }
 
       updatefmDepth(1);
@@ -1117,9 +989,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_PitchBendLevel] = (lowerData[P_PitchBendLevel] + speed);
         lowerData[P_PitchBendLevel] = constrain(lowerData[P_PitchBendLevel], 0, 12);
         PitchBendLevelstr = lowerData[P_PitchBendLevel];
-        if (wholemode) {
-          upperData[P_PitchBendLevel] = lowerData[P_PitchBendLevel];
-        }
       }
 
       updatePitchBendDepth(1);
@@ -1134,9 +1003,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_amDepth] = (lowerData[P_amDepth] + speed);
         lowerData[P_amDepth] = constrain(lowerData[P_amDepth], 0, 127);
         amDepthstr = lowerData[P_amDepth];
-        if (wholemode) {
-          upperData[P_amDepth] = lowerData[P_amDepth];
-        }
       }
 
       updateamDepth(1);
@@ -1151,9 +1017,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_modWheelDepth] = (lowerData[P_modWheelDepth] + speed);
         lowerData[P_modWheelDepth] = constrain(lowerData[P_modWheelDepth], 0, 127);
         modWheelDepthstr = lowerData[P_modWheelDepth];
-        if (wholemode) {
-          upperData[P_modWheelDepth] = lowerData[P_modWheelDepth];
-        }
       }
 
       updatemodWheelDepth(1);
@@ -1168,9 +1031,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_volumeControl] = (lowerData[P_volumeControl] + speed);
         lowerData[P_volumeControl] = constrain(lowerData[P_volumeControl], 0, 127);
         volumeControlstr = lowerData[P_volumeControl];
-        if (wholemode) {
-          upperData[P_volumeControl] = lowerData[P_volumeControl];
-        }
       }
 
       updatevolumeControl(1);
@@ -1185,9 +1045,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_LFO1Rate] = (lowerData[P_LFO1Rate] + speed);
         lowerData[P_LFO1Rate] = constrain(lowerData[P_LFO1Rate], 0, 127);
         LFO1Ratestr = LFOTEMPO[lowerData[P_LFO1Rate]];
-        if (wholemode) {
-          upperData[P_LFO1Rate] = lowerData[P_LFO1Rate];
-        }
       }
 
       updateLFO1Rate(1);
@@ -1202,9 +1059,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_LFO2Rate] = (lowerData[P_LFO2Rate] + speed);
         lowerData[P_LFO2Rate] = constrain(lowerData[P_LFO2Rate], 0, 127);
         LFO2Ratestr = LFOTEMPO[lowerData[P_LFO2Rate]];
-        if (wholemode) {
-          upperData[P_LFO2Rate] = lowerData[P_LFO2Rate];
-        }
       }
 
       updateLFO2Rate(1);
@@ -1219,9 +1073,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_LFO3Rate] = (lowerData[P_LFO3Rate] + speed);
         lowerData[P_LFO3Rate] = constrain(lowerData[P_LFO3Rate], 0, 127);
         LFO3Ratestr = LFOTEMPO[lowerData[P_LFO3Rate]];
-        if (wholemode) {
-          upperData[P_LFO3Rate] = lowerData[P_LFO3Rate];
-        }
       }
 
       updateLFO3Rate(1);
@@ -1236,9 +1087,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_LFO3Delay] = (lowerData[P_LFO3Delay] + speed);
         lowerData[P_LFO3Delay] = constrain(lowerData[P_LFO3Delay], 0, 127);
         LFO3Delaystr = lowerData[P_LFO3Delay];
-        if (wholemode) {
-          upperData[P_LFO3Delay] = lowerData[P_LFO3Delay];
-        }
       }
 
       updateLFO3Delay(1);
@@ -1258,9 +1106,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_LFO3Waveform] = (lowerData[P_LFO3Waveform] + speed);
         lowerData[P_LFO3Waveform] = constrain(lowerData[P_LFO3Waveform], 0, 15);
         LFO3Waveformstr = lowerData[P_LFO3Waveform];
-        if (wholemode) {
-          upperData[P_LFO3Waveform] = lowerData[P_LFO3Waveform];
-        }
       }
 
       updateLFO3Waveform(1);
@@ -1275,9 +1120,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_LFO1Slope] = (lowerData[P_LFO1Slope] + speed);
         lowerData[P_LFO1Slope] = constrain(lowerData[P_LFO1Slope], 0, 127);
         LFO1Slopestr = lowerData[P_LFO1Slope];
-        if (wholemode) {
-          upperData[P_LFO1Slope] = lowerData[P_LFO1Slope];
-        }
       }
 
       updateLFO1Slope(1);
@@ -1292,9 +1134,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_LFO1Delay] = (lowerData[P_LFO1Delay] + speed);
         lowerData[P_LFO1Delay] = constrain(lowerData[P_LFO1Delay], 0, 127);
         LFO1Delaystr = lowerData[P_LFO1Delay];
-        if (wholemode) {
-          upperData[P_LFO1Delay] = lowerData[P_LFO1Delay];
-        }
       }
 
       updateLFO1Delay(1);
@@ -1309,9 +1148,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_effectPot2] = (lowerData[P_effectPot2] + speed);
         lowerData[P_effectPot2] = constrain(lowerData[P_effectPot2], 0, 127);
         effectPot2str = lowerData[P_effectPot2];
-        if (wholemode) {
-          upperData[P_effectPot2] = lowerData[P_effectPot2];
-        }
       }
 
       updateeffectPot2(1);
@@ -1326,9 +1162,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_effectPot1] = (lowerData[P_effectPot1] + speed);
         lowerData[P_effectPot1] = constrain(lowerData[P_effectPot1], 0, 127);
         effectPot1str = lowerData[P_effectPot1];
-        if (wholemode) {
-          upperData[P_effectPot1] = lowerData[P_effectPot1];
-        }
       }
 
       updateeffectPot1(1);
@@ -1343,9 +1176,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_effectsMix] = (lowerData[P_effectsMix] + speed);
         lowerData[P_effectsMix] = constrain(lowerData[P_effectsMix], 0, 127);
         effectsMixstr = LINEARCENTREZERO[lowerData[P_effectsMix]];
-        if (wholemode) {
-          upperData[P_effectsMix] = lowerData[P_effectsMix];
-        }
       }
 
       updateeffectsMix(1);
@@ -1360,9 +1190,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_effectPot3] = (lowerData[P_effectPot3] + speed);
         lowerData[P_effectPot3] = constrain(lowerData[P_effectPot3], 0, 127);
         effectPot3str = lowerData[P_effectPot3];
-        if (wholemode) {
-          upperData[P_effectPot3] = lowerData[P_effectPot3];
-        }
       }
 
       updateeffectPot3(1);
@@ -1377,9 +1204,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_osc2envDepth] = (lowerData[P_osc2envDepth] + speed);
         lowerData[P_osc2envDepth] = constrain(lowerData[P_osc2envDepth], 0, 127);
         osc2envDepthstr = lowerData[P_osc2envDepth];
-        if (wholemode) {
-          upperData[P_osc2envDepth] = lowerData[P_osc2envDepth];
-        }
       }
 
       updateOsc2EnvDepth(1);
@@ -1395,9 +1219,6 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_vcfATDepth] = (lowerData[P_vcfATDepth] + speed);
         lowerData[P_vcfATDepth] = constrain(lowerData[P_vcfATDepth], 0, 127);
         vcfATDepthstr = lowerData[P_vcfATDepth];
-        if (wholemode) {
-          upperData[P_vcfATDepth] = lowerData[P_vcfATDepth];
-        }
       }
 
       updatevcfATDepth(1);
@@ -1412,18 +1233,17 @@ void RotaryEncoderChanged(bool clockwise, int id) {
         lowerData[P_unisonDetune] = (lowerData[P_unisonDetune] + speed);
         lowerData[P_unisonDetune] = constrain(lowerData[P_unisonDetune], 0, 127);
         unisonDetunestr = lowerData[P_unisonDetune];
-        if (wholemode) {
-          upperData[P_unisonDetune] = lowerData[P_unisonDetune];
-        }
       }
 
       updateunisonDetune(1);
       break;
 
     case 59:
-      upperData[P_dualDetune] = (upperData[P_dualDetune] + speed);
-      upperData[P_dualDetune] = constrain(upperData[P_dualDetune], 0, 127);
-      updatedualDetune(1);
+      if (playMode == 1) {
+        upperData[P_dualDetune] = (upperData[P_dualDetune] + speed);
+        upperData[P_dualDetune] = constrain(upperData[P_dualDetune], 0, 127);
+        updatedualDetune(1);
+      }
       break;
   }
 
@@ -2608,14 +2428,18 @@ void updateArpLEDs() {
   mcp1.digitalWrite(ARP_OCT2_LED, (r == 2) ? HIGH : LOW);
   mcp1.digitalWrite(ARP_OCT3_LED, (r == 3) ? HIGH : LOW);
   mcp1.digitalWrite(ARP_OCT4_LED, (r == 4) ? HIGH : LOW);
+  midiCCDisplaySW(CCarpRange, r);
 
   mcp1.digitalWrite(ARP_UP_LED, (lowerData[P_arpMode] == ARP_UP) ? HIGH : LOW);
   mcp1.digitalWrite(ARP_DOWN_LED, (lowerData[P_arpMode] == ARP_DOWN) ? HIGH : LOW);
   mcp1.digitalWrite(ARP_UP_DOWN_LED, (lowerData[P_arpMode] == ARP_UPDOWN) ? HIGH : LOW);
   mcp1.digitalWrite(ARP_RAND_LED, (lowerData[P_arpMode] == ARP_RANDOM) ? HIGH : LOW);
+  midiCCDisplaySW(CCarpMode, lowerData[P_arpMode]);
 
   mcp2.digitalWrite(ARP_START_STOP_LED, lowerData[P_arpStartStop] ? HIGH : LOW);
+  midiCCDisplaySW(CCarpStartStop, lowerData[P_arpStartStop]);
   mcp2.digitalWrite(ARP_LATCH_LED, lowerData[P_arpLatch] ? HIGH : LOW);
+  midiCCDisplaySW(CCarpLatch, lowerData[P_arpLatch]);
 }
 // =========================================================================
 
@@ -3323,7 +3147,7 @@ FLASHMEM void updateLFO2Rate(boolean announce) {
     midiCCOut(CCLFO2Rate, lowerData[P_LFO2Rate]);
     midiCCDisplay(CCLFO2Rate, lowerData[P_LFO2Rate]);
     if (wholemode) {
-      midiCCDCOUpper(CC_LFO2_RATE, upperData[P_LFO2Rate]);
+      midiCCDCOUpper(CC_LFO2_RATE, lowerData[P_LFO2Rate]);
     }
   }
 }
@@ -3342,7 +3166,7 @@ FLASHMEM void updatefmDepth(boolean announce) {
     midiCCOut(CCfmDepth, lowerData[P_fmDepth]);
     midiCCDisplay(CCfmDepth, lowerData[P_fmDepth]);
     if (wholemode) {
-      midiCCDCOUpper(CC_LFO1_FM_DEPTH, upperData[P_fmDepth]);
+      midiCCDCOUpper(CC_LFO1_FM_DEPTH, lowerData[P_fmDepth]);
     }
   }
 }
@@ -3361,7 +3185,7 @@ FLASHMEM void updateATDepth(boolean announce) {
     midiCCOut(CCATDepth, lowerData[P_ATDepth]);
     midiCCDisplay(CCATDepth, lowerData[P_ATDepth]);
     if (wholemode) {
-      midiCCDCOUpper(CC_AT_FM_DEPTH, upperData[P_ATDepth]);
+      midiCCDCOUpper(CC_AT_FM_DEPTH, lowerData[P_ATDepth]);
     }
   }
 }
@@ -3380,7 +3204,7 @@ FLASHMEM void updateosc2PW(boolean announce) {
     midiCCOut(CCosc2PW, lowerData[P_osc2PW]);
     midiCCDisplay(CCosc2PW, lowerData[P_osc2PW]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_PULSE_WIDTH, upperData[P_osc2PW]);
+      midiCCDCOUpper(CC_DCO2_PULSE_WIDTH, lowerData[P_osc2PW]);
     }
   }
 }
@@ -3399,7 +3223,7 @@ FLASHMEM void updateosc2PWM(boolean announce) {
     midiCCOut(CCosc2PWM, lowerData[P_osc2PWM]);
     midiCCDisplay(CCosc2PWM, lowerData[P_osc2PWM]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_LFO2_PWM, upperData[P_osc2PWM]);
+      midiCCDCOUpper(CC_DCO2_LFO2_PWM, lowerData[P_osc2PWM]);
     }
   }
 }
@@ -3419,7 +3243,7 @@ FLASHMEM void updateosc1PW(boolean announce) {
     midiCCOut(CCosc1PW, lowerData[P_osc1PW]);
     midiCCDisplay(CCosc1PW, lowerData[P_osc1PW]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_PULSE_WIDTH, upperData[P_osc1PW]);
+      midiCCDCOUpper(CC_DCO1_PULSE_WIDTH, lowerData[P_osc1PW]);
     }
   }
 }
@@ -3438,7 +3262,7 @@ FLASHMEM void updateosc1PWM(boolean announce) {
     midiCCOut(CCosc1PWM, lowerData[P_osc1PWM]);
     midiCCDisplay(CCosc1PWM, lowerData[P_osc1PWM]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_LFO2_PWM, upperData[P_osc1PWM]);
+      midiCCDCOUpper(CC_DCO1_LFO2_PWM, lowerData[P_osc1PWM]);
     }
   }
 }
@@ -3457,7 +3281,7 @@ FLASHMEM void updateosc1envPWM(boolean announce) {
     midiCCOut(CCosc1envPWM, lowerData[P_osc1envPWM]);
     midiCCDisplay(CCosc1envPWM, lowerData[P_osc1envPWM]);
     if (wholemode) {
-      midiCCDCOUpper(CC_ENV_DCO1_PWM, upperData[P_osc1envPWM]);
+      midiCCDCOUpper(CC_ENV_DCO1_PWM, lowerData[P_osc1envPWM]);
     }
   }
 }
@@ -3476,7 +3300,7 @@ FLASHMEM void updateosc2envPWM(boolean announce) {
     midiCCOut(CCosc2envPWM, lowerData[P_osc2envPWM]);
     midiCCDisplay(CCosc2envPWM, lowerData[P_osc2envPWM]);
     if (wholemode) {
-      midiCCDCOUpper(CC_ENV_DCO2_PWM, upperData[P_osc2envPWM]);
+      midiCCDCOUpper(CC_ENV_DCO2_PWM, lowerData[P_osc2envPWM]);
     }
   }
 }
@@ -3653,7 +3477,7 @@ FLASHMEM void updateglideTime(boolean announce) {
     midiCCOut(CCglideTime, lowerData[P_glideTime]);
     midiCCDisplay(CCglideTime, lowerData[P_glideTime]);
     if (wholemode) {
-      midiCCDCOUpper(CC_PORTAMENTO_TIME, upperData[P_glideTime]);
+      midiCCDCOUpper(CC_PORTAMENTO_TIME, lowerData[P_glideTime]);
     }
   }
 }
@@ -3676,7 +3500,7 @@ FLASHMEM void updateosc2Detune(boolean announce) {
     midiCCOut(CCosc2Detune, lowerData[P_osc2Detune]);
     midiCCDisplay(CCosc2Detune, lowerData[P_osc2Detune]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_DETUNE, upperData[P_osc2Detune]);
+      midiCCDCOUpper(CC_DCO2_DETUNE, lowerData[P_osc2Detune]);
     }
   }
 }
@@ -3718,7 +3542,7 @@ FLASHMEM void updateunisonDetune(boolean announce) {
     midiCCOut(CCunisonDetune, lowerData[P_unisonDetune]);
     midiCCDisplay(CCunisonDetune, lowerData[P_unisonDetune]);
     if (wholemode) {
-      midiCCDCOUpper(CC_UNISON_DETUNE, upperData[P_unisonDetune]);
+      midiCCDCOUpper(CC_UNISON_DETUNE, lowerData[P_unisonDetune]);
     }
   }
 }
@@ -3743,7 +3567,7 @@ FLASHMEM void updateosc2Interval(boolean announce) {
     midiCCOut(CCosc2Interval, lowerData[P_osc2Interval]);
     midiCCDisplay(CCosc2Interval, lowerData[P_osc2Interval]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_INTERVAL, upperData[P_osc2Interval]);
+      midiCCDCOUpper(CC_DCO2_INTERVAL, lowerData[P_osc2Interval]);
     }
   }
 }
@@ -3762,7 +3586,7 @@ FLASHMEM void updatenoiseLevel(boolean announce) {
     midiCCOut(CCnoiseLevel, lowerData[P_noiseLevel]);
     midiCCDisplay(CCnoiseLevel, lowerData[P_noiseLevel]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_NOISE_LEVEL, upperData[P_noiseLevel]);
+      midiCCVoiceUpper(VB_NOISE_LEVEL, lowerData[P_noiseLevel]);
     }
   }
 }
@@ -3781,7 +3605,7 @@ FLASHMEM void updateOsc2SawLevel(boolean announce) {
     midiCCOut(CCosc2SawLevel, lowerData[P_osc2SawLevel]);
     midiCCDisplay(CCosc2SawLevel, lowerData[P_osc2SawLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_SAW_LEVEL, upperData[P_osc2SawLevel]);
+      midiCCDCOUpper(CC_DCO2_SAW_LEVEL, lowerData[P_osc2SawLevel]);
     }
   }
 }
@@ -3800,7 +3624,7 @@ FLASHMEM void updateOsc1SawLevel(boolean announce) {
     midiCCOut(CCosc1SawLevel, lowerData[P_osc1SawLevel]);
     midiCCDisplay(CCosc1SawLevel, lowerData[P_osc1SawLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_SAW_LEVEL, upperData[P_osc1SawLevel]);
+      midiCCDCOUpper(CC_DCO1_SAW_LEVEL, lowerData[P_osc1SawLevel]);
     }
   }
 }
@@ -3819,7 +3643,7 @@ FLASHMEM void updateOsc2PulseLevel(boolean announce) {
     midiCCOut(CCosc2PulseLevel, lowerData[P_osc2PulseLevel]);
     midiCCDisplay(CCosc2PulseLevel, lowerData[P_osc2PulseLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_PULSE_LEVEL, upperData[P_osc2PulseLevel]);
+      midiCCDCOUpper(CC_DCO2_PULSE_LEVEL, lowerData[P_osc2PulseLevel]);
     }
   }
 }
@@ -3838,7 +3662,7 @@ FLASHMEM void updateOsc1PulseLevel(boolean announce) {
     midiCCOut(CCosc1PulseLevel, lowerData[P_osc1PulseLevel]);
     midiCCDisplay(CCosc1PulseLevel, lowerData[P_osc1PulseLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_PULSE_LEVEL, upperData[P_osc1PulseLevel]);
+      midiCCDCOUpper(CC_DCO1_PULSE_LEVEL, lowerData[P_osc1PulseLevel]);
     }
   }
 }
@@ -3857,7 +3681,7 @@ FLASHMEM void updateOsc2TriangleLevel(boolean announce) {
     midiCCOut(CCosc2TriangleLevel, lowerData[P_osc2TriangleLevel]);
     midiCCDisplay(CCosc2TriangleLevel, lowerData[P_osc2TriangleLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO2_SUB_LEVEL, upperData[P_osc2TriangleLevel]);
+      midiCCDCOUpper(CC_DCO2_SUB_LEVEL, lowerData[P_osc2TriangleLevel]);
     }
   }
 }
@@ -3876,7 +3700,7 @@ FLASHMEM void updateOsc1SubLevel(boolean announce) {
     midiCCOut(CCosc1SubLevel, lowerData[P_osc1SubLevel]);
     midiCCDisplay(CCosc1SubLevel, lowerData[P_osc1SubLevel]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_TRI_LEVEL, upperData[P_osc1SubLevel]);
+      midiCCDCOUpper(CC_DCO1_TRI_LEVEL, lowerData[P_osc1SubLevel]);
     }
   }
 }
@@ -3895,7 +3719,7 @@ FLASHMEM void updateOsc2EnvDepth(boolean announce) {
     midiCCOut(CCosc2EnvDepth, lowerData[P_osc2envDepth]);
     midiCCDisplay(CCosc2EnvDepth, lowerData[P_osc2envDepth]);
     if (wholemode) {
-      midiCCDCOUpper(CC_ENV_DEPTH, upperData[P_osc2envDepth]);
+      midiCCDCOUpper(CC_ENV_DEPTH, lowerData[P_osc2envDepth]);
     }
   }
 }
@@ -3914,7 +3738,7 @@ FLASHMEM void updateamDepth(boolean announce) {
     midiCCOut(CCamDepth, lowerData[P_amDepth]);
     midiCCDisplay(CCamDepth, lowerData[P_amDepth]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_AMP_LFO3, upperData[P_amDepth]);
+      midiCCVoiceUpper(VB_AMP_LFO3, lowerData[P_amDepth]);
     }
   }
 }
@@ -3933,7 +3757,7 @@ FLASHMEM void updateFilterCutoff(boolean announce) {
     midiCCOut(CCfilterCutoff, lowerData[P_filterCutoff]);
     midiCCDisplay(CCfilterCutoff, lowerData[P_filterCutoff]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_FILTER_CUTOFF, upperData[P_filterCutoff]);
+      midiCCVoiceUpper(VB_FILTER_CUTOFF, lowerData[P_filterCutoff]);
     }
   }
 }
@@ -3952,7 +3776,7 @@ FLASHMEM void updatefilterLFO(boolean announce) {
     midiCCOut(CCfilterLFO, lowerData[P_filterLFO]);
     midiCCDisplay(CCfilterLFO, lowerData[P_filterLFO]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_FILTER_LFO3, upperData[P_filterLFO]);
+      midiCCVoiceUpper(VB_FILTER_LFO3, lowerData[P_filterLFO]);
     }
   }
 }
@@ -3971,7 +3795,7 @@ FLASHMEM void updatefilterRes(boolean announce) {
     midiCCOut(CCfilterRes, lowerData[P_filterRes]);
     midiCCDisplay(CCfilterRes, lowerData[P_filterRes]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_FILTER_RES, upperData[P_filterRes]);
+      midiCCVoiceUpper(VB_FILTER_RES, lowerData[P_filterRes]);
     }
   }
 }
@@ -4343,7 +4167,7 @@ FLASHMEM void updatefilterEGlevel(boolean announce) {
     midiCCOut(CCfilterEGlevel, lowerData[P_filterEGlevel]);
     midiCCDisplay(CCfilterEGlevel, lowerData[P_filterEGlevel]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_EG_DEPTH, upperData[P_filterEGlevel]);
+      midiCCVoiceUpper(VB_EG_DEPTH, lowerData[P_filterEGlevel]);
     }
   }
 }
@@ -4362,7 +4186,7 @@ FLASHMEM void updatekeytrack(boolean announce) {
     midiCCOut(CCkeyTrack, lowerData[P_keytrack]);
     midiCCDisplay(CCkeyTrack, lowerData[P_keytrack]);
     if (wholemode) {
-      midiCCDCOUpper(CC_KEYTRACK_DEPTH, upperData[P_keytrack]);
+      midiCCDCOUpper(CC_KEYTRACK_DEPTH, lowerData[P_keytrack]);
     }
   }
 }
@@ -4374,8 +4198,8 @@ FLASHMEM void updatearpRate(boolean announce) {
     showCurrentParameterPage("Arp Rate", String(arpRatestr) + " Hz");
     startParameterDisplay();
   }
-  midiCCOut(CCLFO1Rate, lowerData[P_arpRate]);
-  midiCCDisplay(CCLFO1Rate, lowerData[P_arpRate]);
+  midiCCOut(CCarpRate, lowerData[P_arpRate]);
+  midiCCDisplay(CCarpRate, lowerData[P_arpRate]);
 }
 
 FLASHMEM void updateLFO1Rate(boolean announce) {
@@ -4393,7 +4217,7 @@ FLASHMEM void updateLFO1Rate(boolean announce) {
     midiCCOut(CCLFO1Rate, lowerData[P_LFO1Rate]);
     midiCCDisplay(CCLFO1Rate, lowerData[P_LFO1Rate]);
     if (wholemode) {
-      midiCCDCOUpper(CC_LFO1_RATE, upperData[P_LFO1Rate]);
+      midiCCDCOUpper(CC_LFO1_RATE, lowerData[P_LFO1Rate]);
     }
   }
 }
@@ -4412,7 +4236,7 @@ FLASHMEM void updateLFO1Delay(boolean announce) {
     midiCCOut(CCLFO1Delay, lowerData[P_LFO1Delay]);
     midiCCDisplay(CCLFO1Delay, lowerData[P_LFO1Delay]);
     if (wholemode) {
-      midiCCDCOUpper(CC_LFO1_DELAY_TIME, upperData[P_LFO1Delay]);
+      midiCCDCOUpper(CC_LFO1_DELAY_TIME, lowerData[P_LFO1Delay]);
     }
   }
 }
@@ -4431,7 +4255,7 @@ FLASHMEM void updateLFO1Slope(boolean announce) {
     midiCCOut(CCLFO1Slope, lowerData[P_LFO1Slope]);
     midiCCDisplay(CCLFO1Slope, lowerData[P_LFO1Slope]);
     if (wholemode) {
-      midiCCDCOUpper(CC_LFO1_DELAY_RAMP, upperData[P_LFO1Slope]);
+      midiCCDCOUpper(CC_LFO1_DELAY_RAMP, lowerData[P_LFO1Slope]);
     }
   }
 }
@@ -4451,7 +4275,7 @@ FLASHMEM void updateLFO3Rate(boolean announce) {
     midiCCOut(CCLFO3Rate, lowerData[P_LFO3Rate]);
     midiCCDisplay(CCLFO3Rate, lowerData[P_LFO3Rate]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_LFO3_RATE, upperData[P_LFO3Rate]);
+      midiCCVoiceUpper(VB_LFO3_RATE, lowerData[P_LFO3Rate]);
     }
   }
 }
@@ -4484,7 +4308,7 @@ FLASHMEM void updatemodWheelDepth(boolean announce) {
     midiCCOut(CCmodWheelDepth, lowerData[P_modWheelDepth]);
     midiCCDisplay(CCmodWheelDepth, lowerData[P_modWheelDepth]);
     if (wholemode) {
-      midiCCDCOUpper(CC_MW_FM_DEPTH, upperData[P_modWheelDepth]);
+      midiCCDCOUpper(CC_MW_FM_DEPTH, lowerData[P_modWheelDepth]);
     }
   }
 }
@@ -4496,12 +4320,12 @@ FLASHMEM void updatePitchBendDepth(boolean announce) {
   }
   if (upperSW) {
     midiCCDCOUpper(CC_PITCHBEND_RANGE, upperData[P_PitchBendLevel]);
-    midiCCDisplay(CCPitchBend, upperData[P_PitchBendLevel]);
+    midiCCDisplay(CCPitchBend, int(upperData[P_PitchBendLevel] * 10.58));
   } else {
     midiCCDCOLower(CC_PITCHBEND_RANGE, lowerData[P_PitchBendLevel]);
-    midiCCDisplay(CCPitchBend, lowerData[P_PitchBendLevel]);
+    midiCCDisplay(CCPitchBend, int(lowerData[P_PitchBendLevel] * 10.58));
     if (wholemode) {
-      midiCCDCOUpper(CC_PITCHBEND_RANGE, upperData[P_PitchBendLevel]);
+      midiCCDCOUpper(CC_PITCHBEND_RANGE, lowerData[P_PitchBendLevel]);
     }
   }
 }
@@ -4520,7 +4344,7 @@ FLASHMEM void updateeffectPot1(boolean announce) {
     midiCCOut(CCeffectPot1, lowerData[P_effectPot1]);
     midiCCDisplay(CCeffectPot1, lowerData[P_effectPot1]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_EFFECT_POT1, upperData[P_effectPot1]);
+      midiCCVoiceUpper(VB_EFFECT_POT1, lowerData[P_effectPot1]);
     }
   }
 }
@@ -4539,7 +4363,7 @@ FLASHMEM void updateeffectPot2(boolean announce) {
     midiCCOut(CCeffectPot2, lowerData[P_effectPot2]);
     midiCCDisplay(CCeffectPot2, lowerData[P_effectPot2]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_EFFECT_POT2, upperData[P_effectPot2]);
+      midiCCVoiceUpper(VB_EFFECT_POT2, lowerData[P_effectPot2]);
     }
   }
 }
@@ -4558,7 +4382,7 @@ FLASHMEM void updateeffectPot3(boolean announce) {
     midiCCOut(CCeffectPot3, lowerData[P_effectPot3]);
     midiCCDisplay(CCeffectPot3, lowerData[P_effectPot3]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_EFFECT_POT3, upperData[P_effectPot3]);
+      midiCCVoiceUpper(VB_EFFECT_POT3, lowerData[P_effectPot3]);
     }
   }
 }
@@ -4577,7 +4401,7 @@ FLASHMEM void updatevcfATDepth(boolean announce) {
     midiCCOut(CCvcfATDepth, lowerData[P_vcfATDepth]);
     midiCCDisplay(CCvcfATDepth, lowerData[P_vcfATDepth]);
     if (wholemode) {
-      midiCCDCOUpper(CC_AT_VCF_DEPTH, upperData[P_vcfATDepth]);
+      midiCCDCOUpper(CC_AT_VCF_DEPTH, lowerData[P_vcfATDepth]);
     }
   }
 }
@@ -4596,12 +4420,18 @@ FLASHMEM void updateeffectsMix(boolean announce) {
     midiCCOut(CCeffectsMix, lowerData[P_effectsMix]);
     midiCCDisplay(CCeffectsMix, lowerData[P_effectsMix]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_EFFECT_MIX, upperData[P_effectsMix]);
+      midiCCVoiceUpper(VB_EFFECT_MIX, lowerData[P_effectsMix]);
     }
   }
 }
 
 FLASHMEM void updateLFO1Waveform(boolean announce) {
+
+  if (upperSW) {
+    panelData[P_LFO1Waveform] = map(upperData[P_LFO1Waveform], 0, 127, 0, 2);
+  } else {
+    panelData[P_LFO1Waveform] = map(lowerData[P_LFO1Waveform], 0, 127, 0, 2);
+  }
 
   switch (panelData[P_LFO1Waveform]) {
     case 0:
@@ -4635,30 +4465,33 @@ FLASHMEM void updateLFO1Waveform(boolean announce) {
   } else {
     midiCCDCOLower(CC_LFO1_WAVEFORM, lowerData[P_LFO1Waveform]);
     if (wholemode) {
-      midiCCDCOUpper(CC_LFO1_WAVEFORM, upperData[P_LFO1Waveform]);
+      midiCCDCOUpper(CC_LFO1_WAVEFORM, lowerData[P_LFO1Waveform]);
     }
   }
 }
 
 FLASHMEM void updateLFO2Waveform(boolean announce) {
 
+  if (upperSW) {
+    panelData[P_LFO2Waveform] = map(upperData[P_LFO2Waveform], 0, 127, 0, 2);
+  } else {
+    panelData[P_LFO2Waveform] = map(lowerData[P_LFO2Waveform], 0, 127, 0, 2);
+  }
+
   switch (panelData[P_LFO2Waveform]) {
     case 0:
-      StratusLFOWaveform = "Triangle";
       midiCCDisplaySW(CCLFO2Waveform, 0);
       mcp13.digitalWrite(LFO2_WAVE_LED_RED, HIGH);
       mcp13.digitalWrite(LFO2_WAVE_LED_GREEN, LOW);
       break;
 
     case 1:
-      StratusLFOWaveform = "Square";
       midiCCDisplaySW(CCLFO2Waveform, 1);
       mcp13.digitalWrite(LFO2_WAVE_LED_RED, HIGH);
       mcp13.digitalWrite(LFO2_WAVE_LED_GREEN, HIGH);
       break;
 
     case 2:
-      StratusLFOWaveform = "Sawtooth";
       midiCCDisplaySW(CCLFO2Waveform, 2);
       mcp13.digitalWrite(LFO2_WAVE_LED_RED, LOW);
       mcp13.digitalWrite(LFO2_WAVE_LED_GREEN, HIGH);
@@ -4674,7 +4507,7 @@ FLASHMEM void updateLFO2Waveform(boolean announce) {
   } else {
     midiCCDCOLower(CC_LFO2_WAVEFORM, lowerData[P_LFO2Waveform]);
     if (wholemode) {
-      midiCCDCOUpper(CC_LFO2_WAVEFORM, upperData[P_LFO2Waveform]);
+      midiCCDCOUpper(CC_LFO2_WAVEFORM, lowerData[P_LFO2Waveform]);
     }
   }
 }
@@ -4692,114 +4525,100 @@ void updateLFO3Waveform(boolean announce) {
       StratusLFOWaveform = "Sawtooth Up";
       LFOWaveCV = 1;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 0);
       break;
 
     case 1:
       StratusLFOWaveform = "Sawtooth Down";
       LFOWaveCV = 20;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 1);
       break;
 
     case 2:
       StratusLFOWaveform = "Squarewave";
       LFOWaveCV = 35;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 2);
       break;
 
     case 3:
       StratusLFOWaveform = "Triangle";
       LFOWaveCV = 50;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 3);
       break;
 
     case 4:
       StratusLFOWaveform = "Sinewave";
       LFOWaveCV = 74;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 4);
       break;
 
     case 5:
       StratusLFOWaveform = "Sweeps";
       LFOWaveCV = 90;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 5);
       break;
 
     case 6:
       StratusLFOWaveform = "Lumps";
       LFOWaveCV = 107;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 6);
       break;
 
     case 7:
       StratusLFOWaveform = "Sample & Hold";
       LFOWaveCV = 122;
       panelData[P_lfoAlt] = 127;
-      midiCCDisplaySW(CCLFO3Waveform, 7);
       break;
 
     case 8:
       StratusLFOWaveform = "Saw +Oct";
       LFOWaveCV = 1;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 8);
       break;
 
     case 9:
       StratusLFOWaveform = "Quad Saw";
       LFOWaveCV = 20;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 9);
       break;
 
     case 10:
       StratusLFOWaveform = "Quad Pulse";
       LFOWaveCV = 35;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 10);
       break;
 
     case 11:
       StratusLFOWaveform = "Tri Step";
       LFOWaveCV = 50;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 11);
       break;
 
     case 12:
       StratusLFOWaveform = "Sine +Oct";
       LFOWaveCV = 74;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 12);
       break;
 
     case 13:
       StratusLFOWaveform = "Sine +3rd";
       LFOWaveCV = 90;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 13);
       break;
 
     case 14:
       StratusLFOWaveform = "Sine +4th";
       LFOWaveCV = 107;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 14);
       break;
 
     case 15:
       StratusLFOWaveform = "Rand Slopes";
       LFOWaveCV = 122;
       panelData[P_lfoAlt] = 0;
-      midiCCDisplaySW(CCLFO3Waveform, 15);
       break;
   }
+
+
   if (announce) {
     showCurrentParameterPage("LFO3 Wave", StratusLFOWaveform);
     startParameterDisplay();
@@ -4807,9 +4626,15 @@ void updateLFO3Waveform(boolean announce) {
   if (upperSW) {
     midiCCVoiceUpper(VB_LFO3_ALT, panelData[P_lfoAlt]);
     midiCCVoiceUpper(VB_LFO3_WAVE, LFOWaveCV);
+    midiCCDisplay(CCLFO3Waveform, (int(upperData[P_LFO3Waveform] * 8.47)));
+    delay(5);
+    midiCCDisplaySW(CCLFO3Waveform, panelData[P_LFO3Waveform]);
   } else {
     midiCCVoiceLower(VB_LFO3_ALT, panelData[P_lfoAlt]);
     midiCCVoiceLower(VB_LFO3_WAVE, LFOWaveCV);
+    midiCCDisplay(CCLFO3Waveform, (int(lowerData[P_LFO3Waveform] * 8.47)));
+    delay(5);
+    midiCCDisplaySW(CCLFO3Waveform, panelData[P_LFO3Waveform]);
     if (wholemode) {
       midiCCVoiceUpper(VB_LFO3_ALT, panelData[P_lfoAlt]);
       midiCCVoiceUpper(VB_LFO3_WAVE, LFOWaveCV);
@@ -4835,7 +4660,7 @@ FLASHMEM void updatepitchAttack(boolean announce) {
     midiCCOut(CCpitchAttack, lowerData[P_pitchAttack]);
     midiCCDisplay(CCpitchAttack, lowerData[P_pitchAttack]);
     if (wholemode) {
-      midiCCDCOUpper(CC_ENV_ATTACK, upperData[P_pitchAttack]);
+      midiCCDCOUpper(CC_ENV_ATTACK, lowerData[P_pitchAttack]);
     }
   }
 }
@@ -4858,7 +4683,7 @@ FLASHMEM void updatepitchDecay(boolean announce) {
     midiCCOut(CCpitchDecay, lowerData[P_pitchDecay]);
     midiCCDisplay(CCpitchDecay, lowerData[P_pitchDecay]);
     if (wholemode) {
-      midiCCDCOUpper(CC_ENV_DECAY, upperData[P_pitchDecay]);
+      midiCCDCOUpper(CC_ENV_DECAY, lowerData[P_pitchDecay]);
     }
   }
 }
@@ -4877,7 +4702,7 @@ FLASHMEM void updatepitchSustain(boolean announce) {
     midiCCOut(CCpitchSustain, lowerData[P_pitchSustain]);
     midiCCDisplay(CCpitchSustain, lowerData[P_pitchSustain]);
     if (wholemode) {
-      midiCCDCOUpper(CC_ENV_SUSTAIN, upperData[P_pitchSustain]);
+      midiCCDCOUpper(CC_ENV_SUSTAIN, lowerData[P_pitchSustain]);
     }
   }
 }
@@ -4900,7 +4725,7 @@ FLASHMEM void updatepitchRelease(boolean announce) {
     midiCCOut(CCpitchRelease, lowerData[P_pitchRelease]);
     midiCCDisplay(CCpitchRelease, lowerData[P_pitchRelease]);
     if (wholemode) {
-      midiCCDCOUpper(CC_ENV_RELEASE, upperData[P_pitchRelease]);
+      midiCCDCOUpper(CC_ENV_RELEASE, lowerData[P_pitchRelease]);
     }
   }
 }
@@ -4923,7 +4748,7 @@ FLASHMEM void updatefilterAttack(boolean announce) {
     midiCCOut(CCfilterAttack, lowerData[P_filterAttack]);
     midiCCDisplay(CCfilterAttack, lowerData[P_filterAttack]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCF_ATTACK, upperData[P_filterAttack]);
+      midiCCVoiceUpper(VB_VCF_ATTACK, lowerData[P_filterAttack]);
     }
   }
 }
@@ -4946,7 +4771,7 @@ FLASHMEM void updatefilterDecay(boolean announce) {
     midiCCOut(CCfilterDecay, lowerData[P_filterDecay]);
     midiCCDisplay(CCfilterDecay, lowerData[P_filterDecay]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCF_DECAY, upperData[P_filterDecay]);
+      midiCCVoiceUpper(VB_VCF_DECAY, lowerData[P_filterDecay]);
     }
   }
 }
@@ -4965,7 +4790,7 @@ FLASHMEM void updatefilterSustain(boolean announce) {
     midiCCOut(CCfilterSustain, lowerData[P_filterSustain]);
     midiCCDisplay(CCfilterSustain, lowerData[P_filterSustain]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCF_SUSTAIN, upperData[P_filterSustain]);
+      midiCCVoiceUpper(VB_VCF_SUSTAIN, lowerData[P_filterSustain]);
     }
   }
 }
@@ -4988,7 +4813,7 @@ FLASHMEM void updatefilterRelease(boolean announce) {
     midiCCOut(CCfilterRelease, lowerData[P_filterRelease]);
     midiCCDisplay(CCfilterRelease, lowerData[P_filterRelease]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCF_RELEASE, upperData[P_filterRelease]);
+      midiCCVoiceUpper(VB_VCF_RELEASE, lowerData[P_filterRelease]);
     }
   }
 }
@@ -5013,8 +4838,7 @@ FLASHMEM void updateampAttack(boolean announce) {
     midiCCDisplay(CCampAttack, lowerData[P_ampAttack]);
     lowerData[P_oldampAttack] = lowerData[P_ampAttack];
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCA_ATTACK, upperData[P_ampAttack]);
-      upperData[P_oldampAttack] = lowerData[P_oldampAttack];
+      midiCCVoiceUpper(VB_VCA_ATTACK, lowerData[P_ampAttack]);
     }
   }
 }
@@ -5039,8 +4863,7 @@ FLASHMEM void updateampDecay(boolean announce) {
     midiCCDisplay(CCampDecay, lowerData[P_ampDecay]);
     lowerData[P_oldampDecay] = lowerData[P_ampDecay];
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCA_DECAY, upperData[P_ampDecay]);
-      upperData[P_oldampDecay] = lowerData[P_oldampDecay];
+      midiCCVoiceUpper(VB_VCA_DECAY, lowerData[P_ampDecay]);
     }
   }
 }
@@ -5061,8 +4884,7 @@ FLASHMEM void updateampSustain(boolean announce) {
     midiCCDisplay(CCampSustain, lowerData[P_ampSustain]);
     lowerData[P_oldampSustain] = lowerData[P_ampSustain];
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCA_SUSTAIN, upperData[P_ampSustain]);
-      upperData[P_oldampSustain] = lowerData[P_oldampSustain];
+      midiCCVoiceUpper(VB_VCA_SUSTAIN, lowerData[P_ampSustain]);
     }
   }
 }
@@ -5087,8 +4909,7 @@ FLASHMEM void updateampRelease(boolean announce) {
     midiCCDisplay(CCampRelease, lowerData[P_ampRelease]);
     lowerData[P_oldampRelease] = lowerData[P_ampRelease];
     if (wholemode) {
-      midiCCVoiceUpper(VB_VCA_RELEASE, upperData[P_ampRelease]);
-      upperData[P_oldampRelease] = lowerData[P_oldampRelease];
+      midiCCVoiceUpper(VB_VCA_RELEASE, lowerData[P_ampRelease]);
     }
   }
 }
@@ -5107,7 +4928,7 @@ FLASHMEM void updatevolumeControl(boolean announce) {
     midiCCOut(CCvolumeControl, lowerData[P_volumeControl]);
     midiCCDisplay(CCvolumeControl, lowerData[P_volumeControl]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_VOLUME, upperData[P_volumeControl]);
+      midiCCVoiceUpper(VB_VOLUME, lowerData[P_volumeControl]);
     }
   }
 }
@@ -5126,7 +4947,7 @@ FLASHMEM void updatefilterLevel1(boolean announce) {
     midiCCOut(CCfilterLevel1, lowerData[P_filterLevel1]);
     midiCCDisplay(CCfilterLevel1, lowerData[P_filterLevel1]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_FILTER1_LEVEL, upperData[P_filterLevel1]);
+      midiCCVoiceUpper(VB_FILTER1_LEVEL, lowerData[P_filterLevel1]);
     }
   }
 }
@@ -5145,7 +4966,7 @@ FLASHMEM void updatefilterLevel2(boolean announce) {
     midiCCOut(CCfilterLevel2, lowerData[P_filterLevel2]);
     midiCCDisplay(CCfilterLevel2, lowerData[P_filterLevel2]);
     if (wholemode) {
-      midiCCVoiceUpper(VB_FILTER2_LEVEL, upperData[P_filterLevel2]);
+      midiCCVoiceUpper(VB_FILTER2_LEVEL, lowerData[P_filterLevel2]);
     }
   }
 }
@@ -5164,7 +4985,7 @@ FLASHMEM void updateosc1sawDetune(boolean announce) {
     midiCCOut(CCosc1sawDetune, lowerData[P_osc1sawDetune]);
     midiCCDisplay(CCosc1sawDetune, lowerData[P_osc1sawDetune]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_SAW_DETUNE, upperData[P_osc1sawDetune]);
+      midiCCDCOUpper(CC_DCO1_SAW_DETUNE, lowerData[P_osc1sawDetune]);
     }
   }
 }
@@ -5183,7 +5004,7 @@ FLASHMEM void updateosc1sawCount(boolean announce) {
     midiCCOut(CCosc1sawCount, lowerData[P_osc1sawCount]);
     midiCCDisplay(CCosc1sawCount, lowerData[P_osc1sawCount]);
     if (wholemode) {
-      midiCCDCOUpper(CC_DCO1_SAW_COUNT, upperData[P_osc1sawCount]);
+      midiCCDCOUpper(CC_DCO1_SAW_COUNT, lowerData[P_osc1sawCount]);
     }
   }
 }
@@ -5253,6 +5074,7 @@ FLASHMEM void updateplayMode(boolean announce) {
       startParameterDisplay();
     }
     midiCCDisplaySW(CCplayMode, 1);
+    delay(1);
     midiCCOut(CCplayMode, 1);
     midiCCVoiceLower(LFO3_SYNC, 0);
     mcp3.digitalWrite(MODE_LED_RED, HIGH);
@@ -5260,6 +5082,7 @@ FLASHMEM void updateplayMode(boolean announce) {
     wholemode = false;
     dualmode = true;
     splitmode = false;
+    
   } else if (playMode == 2) {
     if (announce) {
       showCurrentParameterPage("Key Mode", "Split");
@@ -5311,8 +5134,8 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
         showCurrentParameterPage("Keyboard Mode", "Mono");
         startParameterDisplay();
       }
-      midiCCDisplaySW(CCkeyboardMode, 2);
-      midiCCOut(CCkeyboardMode, 2);
+      midiCCDisplaySW(CCkeyboardMode, 3);
+      midiCCOut(CCkeyboardMode, 3);
       midiCCDCOUpper(CC_UNISON_MODE, 0);
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, LOW);
@@ -5324,8 +5147,8 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_UNISON_MODE, 127);
-      midiCCDisplaySW(CCkeyboardMode, 3);
-      midiCCOut(CCkeyboardMode, 3);
+      midiCCDisplaySW(CCkeyboardMode, 2);
+      midiCCOut(CCkeyboardMode, 2);
       mcp3.digitalWrite(POLY1_LED, LOW);
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, HIGH);
@@ -5378,8 +5201,8 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, LOW);
       mcp3.digitalWrite(MONO_LED, HIGH);
-      midiCCDisplaySW(CCkeyboardMode, 2);
-      midiCCOut(CCkeyboardMode, 2);
+      midiCCDisplaySW(CCkeyboardMode, 3);
+      midiCCOut(CCkeyboardMode, 3);
     } else if (lowerData[P_keyboardMode] == 3) {
       if (announce) {
         showCurrentParameterPage("Keyboard Mode", "Unison");
@@ -5393,8 +5216,8 @@ FLASHMEM void updatekeyboardMode(boolean announce) {
       mcp3.digitalWrite(POLY2_LED, LOW);
       mcp3.digitalWrite(UNISON_LED, HIGH);
       mcp3.digitalWrite(MONO_LED, LOW);
-      midiCCDisplaySW(CCkeyboardMode, 3);
-      midiCCOut(CCkeyboardMode, 3);
+      midiCCDisplaySW(CCkeyboardMode, 2);
+      midiCCOut(CCkeyboardMode, 2);
     }
   }
 }
@@ -5785,7 +5608,6 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, HIGH);
     }
   } else {
-    //midiCCVoiceLower(LFO3_SYNC, 0);
     if (lowerData[P_lfoMultiplier] == 0) {
       if (announce) {
         showCurrentParameterPage("LFO Multiplier", "x0.5");
@@ -5795,7 +5617,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       midiCCVoiceLower(VB_MULTIPLIER_BIT1, 0);
       midiCCVoiceLower(VB_MULTIPLIER_BIT2, 0);
       if (wholemode) {
-        midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 0);
+        midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 127);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
       }
@@ -5829,8 +5651,8 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       midiCCVoiceLower(VB_MULTIPLIER_BIT1, 127);
       midiCCVoiceLower(VB_MULTIPLIER_BIT2, 0);
       if (wholemode) {
-        midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 0);
-        midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 127);
+        midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 127);
+        midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
       }
       midiCCDisplaySW(CClfoMult, 2);
@@ -5847,7 +5669,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       midiCCVoiceLower(VB_MULTIPLIER_BIT2, 0);
       if (wholemode) {
         midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 127);
-        midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 127);
+        midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
       }
       midiCCDisplaySW(CClfoMult, 3);
@@ -5855,7 +5677,6 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       mcp13.digitalWrite(LFO3_MULT_LED_RED, HIGH);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, HIGH);
     }
-    //midiCCVoiceLower(LFO3_SYNC, 127);
   }
 }
 
@@ -5905,7 +5726,7 @@ FLASHMEM void updateglideSW(boolean announce) {
       midiCCDisplaySW(CCglideSW, 1);
       mcp4.digitalWrite(GLIDE_LED_RED, HIGH);
       if (wholemode) {
-        midiCCDCOUpper(CC_PORTAMENTO_TIME, upperData[P_glideTime]);
+        midiCCDCOUpper(CC_PORTAMENTO_TIME, lowerData[P_glideTime]);
         midiCCDCOUpper(CC_PORTAMENTO_SW, 127);
         mcp4.digitalWrite(GLIDE_LED_GREEN, HIGH);
       }
@@ -5921,7 +5742,7 @@ FLASHMEM void updatefilterPoleSwitch(boolean announce) {
       }
       midiCCVoiceUpper(VB_FILTER_POLE, 127);
       midiCCOut(CCfilterPoleSW, 127);
-      midiCCDisplaySW(CCfilterPoleSW, 127);
+      midiCCDisplaySW(CCfilterPoleSW, 1);
       mcp8.digitalWrite(VCF_POLE_LED, HIGH);
     } else {
       if (announce) {
@@ -5942,13 +5763,13 @@ FLASHMEM void updatefilterPoleSwitch(boolean announce) {
         midiCCVoiceUpper(VB_FILTER_POLE, 127);
       }
       midiCCOut(CCfilterPoleSW, 127);
-      midiCCDisplaySW(CCfilterPoleSW, 127);
+      midiCCDisplaySW(CCfilterPoleSW, 1);
       mcp8.digitalWrite(VCF_POLE_LED, HIGH);
     } else {
       if (announce) {
         updateFilterType(1);
       }
-      midiCCVoiceLower(VB_FILTER_POLE, 00);
+      midiCCVoiceLower(VB_FILTER_POLE, 0);
       if (wholemode) {
         midiCCVoiceUpper(VB_FILTER_POLE, 0);
       }
@@ -6828,8 +6649,8 @@ FLASHMEM void updateenv2_env3_adsr(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_GATE_ENABLE, 1);
-      midiCCDisplaySW(CCenv2_env3_adsr, 1);
-      midiCCOut(CCenv2_env3_adsr, 1);
+      midiCCDisplaySW(CCenv2_env3_adsr, 0);
+      midiCCOut(CCenv2_env3_adsr, 0);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, HIGH);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, LOW);
     } else {
@@ -6838,8 +6659,8 @@ FLASHMEM void updateenv2_env3_adsr(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_GATE_ENABLE, 0);
-      midiCCDisplaySW(CCenv2_env3_adsr, 0);
-      midiCCOut(CCenv2_env3_adsr, 0);
+      midiCCDisplaySW(CCenv2_env3_adsr, 1);
+      midiCCOut(CCenv2_env3_adsr, 1);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, LOW);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, HIGH);
     }
@@ -6853,8 +6674,8 @@ FLASHMEM void updateenv2_env3_adsr(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_GATE_ENABLE, 1);
       }
-      midiCCDisplaySW(CCenv2_env3_adsr, 1);
-      midiCCOut(CCenv2_env3_adsr, 1);
+      midiCCDisplaySW(CCenv2_env3_adsr, 0);
+      midiCCOut(CCenv2_env3_adsr, 0);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, HIGH);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, LOW);
     } else {
@@ -6866,8 +6687,8 @@ FLASHMEM void updateenv2_env3_adsr(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_GATE_ENABLE, 0);
       }
-      midiCCDisplaySW(CCenv2_env3_adsr, 0);
-      midiCCOut(CCenv2_env3_adsr, 0);
+      midiCCDisplaySW(CCenv2_env3_adsr, 1);
+      midiCCOut(CCenv2_env3_adsr, 1);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_RED, LOW);
       mcp15.digitalWrite(ENV2_3_ADSR_LED_GREEN, HIGH);
     }
@@ -6876,13 +6697,54 @@ FLASHMEM void updateenv2_env3_adsr(boolean announce) {
 
 void updateNotePriority(boolean announce) {
   if (upperSW) {
-    if (dualmode) {
-      lowerData[P_NotePriority] = upperData[P_NotePriority];
-    }
+
     switch (upperData[P_NotePriority]) {
       case 0:
         if (announce) {
           showCurrentParameterPage("Note Priority", "Top");
+          startParameterDisplay();
+        }
+        mcp4.digitalWrite(PRIORITY_LED_RED, LOW);
+        mcp4.digitalWrite(PRIORITY_LED_GREEN, HIGH);
+
+        midiCCOut(CCNotePriority, 0);
+        midiCCDisplaySW(CCNotePriority, 0);
+        break;
+
+      case 1:
+        if (announce) {
+          showCurrentParameterPage("Note Priority", "Bottom");
+          startParameterDisplay();
+        }
+        mcp4.digitalWrite(PRIORITY_LED_RED, HIGH);
+        mcp4.digitalWrite(PRIORITY_LED_GREEN, LOW);
+
+        midiCCOut(CCNotePriority, 63);
+        midiCCDisplaySW(CCNotePriority, 1);
+        break;
+
+      case 2:
+        if (announce) {
+          showCurrentParameterPage("Note Priority", "Last");
+          startParameterDisplay();
+        }
+        mcp4.digitalWrite(PRIORITY_LED_RED, HIGH);
+        mcp4.digitalWrite(PRIORITY_LED_GREEN, HIGH);
+
+        midiCCOut(CCNotePriority, 127);
+                midiCCDisplaySW(CCNotePriority, 2);
+        break;
+    }
+    if (dualmode) {
+      lowerData[P_NotePriority] = upperData[P_NotePriority];
+    }
+  } else {
+
+    switch (lowerData[P_NotePriority]) {
+      case 0:
+        if (announce) {
+          showCurrentParameterPage("Note Priority", "Top");
+          startParameterDisplay();
         }
         mcp4.digitalWrite(PRIORITY_LED_RED, LOW);
         mcp4.digitalWrite(PRIORITY_LED_GREEN, HIGH);
@@ -6893,6 +6755,7 @@ void updateNotePriority(boolean announce) {
       case 1:
         if (announce) {
           showCurrentParameterPage("Note Priority", "Bottom");
+          startParameterDisplay();
         }
         mcp4.digitalWrite(PRIORITY_LED_RED, HIGH);
         mcp4.digitalWrite(PRIORITY_LED_GREEN, LOW);
@@ -6903,6 +6766,7 @@ void updateNotePriority(boolean announce) {
       case 2:
         if (announce) {
           showCurrentParameterPage("Note Priority", "Last");
+          startParameterDisplay();
         }
         mcp4.digitalWrite(PRIORITY_LED_RED, HIGH);
         mcp4.digitalWrite(PRIORITY_LED_GREEN, HIGH);
@@ -6910,40 +6774,8 @@ void updateNotePriority(boolean announce) {
         midiCCOut(CCNotePriority, 127);
         break;
     }
-  } else {
     if (dualmode) {
       upperData[P_NotePriority] = lowerData[P_NotePriority];
-    }
-    switch (lowerData[P_NotePriority]) {
-      case 0:
-        if (announce) {
-          showCurrentParameterPage("Note Priority", "Top");
-        }
-        mcp4.digitalWrite(PRIORITY_LED_RED, LOW);
-        mcp4.digitalWrite(PRIORITY_LED_GREEN, HIGH);
-        midiCCDisplay(CCNotePriority, 0);
-        midiCCOut(CCNotePriority, 0);
-        break;
-
-      case 1:
-        if (announce) {
-          showCurrentParameterPage("Note Priority", "Bottom");
-        }
-        mcp4.digitalWrite(PRIORITY_LED_RED, HIGH);
-        mcp4.digitalWrite(PRIORITY_LED_GREEN, LOW);
-        midiCCDisplay(CCNotePriority, 1);
-        midiCCOut(CCNotePriority, 63);
-        break;
-
-      case 2:
-        if (announce) {
-          showCurrentParameterPage("Note Priority", "Last");
-        }
-        mcp4.digitalWrite(PRIORITY_LED_RED, HIGH);
-        mcp4.digitalWrite(PRIORITY_LED_GREEN, HIGH);
-        midiCCDisplay(CCNotePriority, 2);
-        midiCCOut(CCNotePriority, 127);
-        break;
     }
   }
 }
@@ -7139,20 +6971,16 @@ FLASHMEM void updatevcaGate(boolean announce) {
       lowerData[P_ampDecay] = lowerData[P_oldampDecay];
       lowerData[P_ampSustain] = lowerData[P_oldampSustain];
       lowerData[P_ampRelease] = lowerData[P_oldampRelease];
-      midiCCVoiceLower(VB_VCA_ATTACK, upperData[P_ampAttack]);
-      midiCCVoiceLower(VB_VCA_DECAY, upperData[P_ampDecay]);
-      midiCCVoiceLower(VB_VCA_SUSTAIN, upperData[P_ampSustain]);
-      midiCCVoiceLower(VB_VCA_RELEASE, upperData[P_ampRelease]);
+      midiCCVoiceLower(VB_VCA_ATTACK, lowerData[P_ampAttack]);
+      midiCCVoiceLower(VB_VCA_DECAY, lowerData[P_ampDecay]);
+      midiCCVoiceLower(VB_VCA_SUSTAIN, lowerData[P_ampSustain]);
+      midiCCVoiceLower(VB_VCA_RELEASE, lowerData[P_ampRelease]);
       mcp13.digitalWrite(AMP_ENV_GATE_LED, LOW);
       if (wholemode) {
-        upperData[P_ampAttack] = upperData[P_oldampAttack];
-        upperData[P_ampDecay] = upperData[P_oldampDecay];
-        upperData[P_ampSustain] = upperData[P_oldampSustain];
-        upperData[P_ampRelease] = upperData[P_oldampRelease];
-        midiCCVoiceUpper(VB_VCA_ATTACK, upperData[P_ampAttack]);
-        midiCCVoiceUpper(VB_VCA_DECAY, upperData[P_ampDecay]);
-        midiCCVoiceUpper(VB_VCA_SUSTAIN, upperData[P_ampSustain]);
-        midiCCVoiceUpper(VB_VCA_RELEASE, upperData[P_ampRelease]);
+        midiCCVoiceUpper(VB_VCA_ATTACK, lowerData[P_ampAttack]);
+        midiCCVoiceUpper(VB_VCA_DECAY, lowerData[P_ampDecay]);
+        midiCCVoiceUpper(VB_VCA_SUSTAIN, lowerData[P_ampSustain]);
+        midiCCVoiceUpper(VB_VCA_RELEASE, lowerData[P_ampRelease]);
       }
     } else {
       if (announce) {
@@ -7179,26 +7007,22 @@ FLASHMEM void updatevcaGate(boolean announce) {
 FLASHMEM void updateupperSW(boolean announce) {
   if (!wholemode) {
     if (upperSW) {
+      midiCCDisplaySW(CCupperSW, 1);
       mcp3.digitalWrite(UPPER_LED, HIGH);
       mcp3.digitalWrite(LOWER_LED, LOW);
-      midiCCDisplaySW(CClowerSW, 0);
-      midiCCDisplaySW(CCupperSW, 1);
       upperParamsToDisplay();
       setAllButtons();
-      //srp.writePin(UPPER_RELAY_1, HIGH);
     }
   }
 }
 
 FLASHMEM void updatelowerSW(boolean announce) {
   if (lowerSW) {
+    midiCCDisplaySW(CClowerSW, 1);
     mcp3.digitalWrite(UPPER_LED, LOW);
     mcp3.digitalWrite(LOWER_LED, HIGH);
-    midiCCDisplaySW(CCupperSW, 0);
-    midiCCDisplaySW(CClowerSW, 1);
     lowerParamsToDisplay();
     setAllButtons();
-    //srp.writePin(UPPER_RELAY_1, LOW);
   }
 }
 
@@ -7319,9 +7143,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_glideTime] = value;
       } else {
         lowerData[P_glideTime] = value;
-        if (wholemode) {
-          upperData[P_glideTime] = value;
-        }
       }
       glideTimestr = LINEAR[value];
       updateglideTime(1);
@@ -7332,9 +7153,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_LFO2Rate] = value;
       } else {
         lowerData[P_LFO2Rate] = value;
-        if (wholemode) {
-          upperData[P_LFO2Rate] = value;
-        }
       }
       LFO2Ratestr = LFOTEMPO[value];  // for display
       updateLFO2Rate(1);
@@ -7345,9 +7163,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_fmDepth] = value;
       } else {
         lowerData[P_fmDepth] = value;
-        if (wholemode) {
-          upperData[P_fmDepth] = value;
-        }
       }
       fmDepthstr = value;
       updatefmDepth(1);
@@ -7358,9 +7173,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2PW] = value;
       } else {
         lowerData[P_osc2PW] = value;
-        if (wholemode) {
-          upperData[P_osc2PW] = value;
-        }
       }
       osc2PWstr = PULSEWIDTH[value];
       updateosc2PW(1);
@@ -7371,9 +7183,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2PWM] = value;
       } else {
         lowerData[P_osc2PWM] = value;
-        if (wholemode) {
-          upperData[P_osc2PWM] = value;
-        }
       }
       osc2PWMstr = value;
       updateosc2PWM(1);
@@ -7384,9 +7193,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1PW] = value;
       } else {
         lowerData[P_osc1PW] = value;
-        if (wholemode) {
-          upperData[P_osc1PW] = value;
-        }
       }
       osc1PWstr = PULSEWIDTH[value];
       updateosc1PW(1);
@@ -7397,9 +7203,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1PWM] = value;
       } else {
         lowerData[P_osc1PWM] = value;
-        if (wholemode) {
-          upperData[P_osc1PWM] = value;
-        }
       }
       osc1PWMstr = value;
       updateosc1PWM(1);
@@ -7410,9 +7213,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1envPWM] = value;
       } else {
         lowerData[P_osc1envPWM] = value;
-        if (wholemode) {
-          upperData[P_osc1envPWM] = value;
-        }
       }
       osc1PWMstr = value;
       updateosc1envPWM(1);
@@ -7423,9 +7223,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2envPWM] = value;
       } else {
         lowerData[P_osc2envPWM] = value;
-        if (wholemode) {
-          upperData[P_osc2envPWM] = value;
-        }
       }
       osc2PWMstr = value;
       updateosc2envPWM(1);
@@ -7436,9 +7233,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1Range] = value;
       } else {
         lowerData[P_osc1Range] = value;
-        if (wholemode) {
-          upperData[P_osc1Range] = value;
-        }
       }
       updateosc1Range(1);
       break;
@@ -7448,9 +7242,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2Range] = value;
       } else {
         lowerData[P_osc2Range] = value;
-        if (wholemode) {
-          upperData[P_osc2Range] = value;
-        }
       }
       updateosc2Range(1);
       break;
@@ -7460,9 +7251,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2Detune] = value;
       } else {
         lowerData[P_osc2Detune] = value;
-        if (wholemode) {
-          upperData[P_osc2Detune] = value;
-        }
       }
       updateosc2Detune(1);
       break;
@@ -7479,9 +7267,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_unisonDetune] = value;       
       } else {
         lowerData[P_unisonDetune] = value;
-        if (wholemode) {
-          upperData[P_unisonDetune] = value;
-        }
       }
       unisonDetunestr = value;
       updateunisonDetune(1);
@@ -7492,9 +7277,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2Interval] = value;
       } else {
         lowerData[P_osc2Interval] = value;
-        if (wholemode) {
-          upperData[P_osc2Interval] = value;
-        }
       }
       osc2Intervalstr = value;
       updateosc2Interval(1);
@@ -7505,9 +7287,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_ATDepth] = value;
       } else {
         lowerData[P_ATDepth] = value;
-        if (wholemode) {
-          upperData[P_ATDepth] = value;
-        }
       }
       ATDepthstr = value;
       updateATDepth(1);
@@ -7518,9 +7297,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_noiseLevel] = value;
       } else {
         lowerData[P_noiseLevel] = value;
-        if (wholemode) {
-          upperData[P_noiseLevel] = value;
-        }
       }
       noiseLevelstr = value;
       updatenoiseLevel(1);
@@ -7531,9 +7307,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2SawLevel] = value;
       } else {
         lowerData[P_osc2SawLevel] = value;
-        if (wholemode) {
-          upperData[P_osc2SawLevel] = value;
-        }
       }
       osc2SawLevelstr = value;  // for display
       updateOsc2SawLevel(1);
@@ -7544,9 +7317,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1SawLevel] = value;
       } else {
         lowerData[P_osc1SawLevel] = value;
-        if (wholemode) {
-          upperData[P_osc1SawLevel] = value;
-        }
       }
       osc1SawLevelstr = value;  // for display
       updateOsc1SawLevel(1);
@@ -7557,9 +7327,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2PulseLevel] = value;
       } else {
         lowerData[P_osc2PulseLevel] = value;
-        if (wholemode) {
-          upperData[P_osc2PulseLevel] = value;
-        }
       }
       osc2PulseLevelstr = value;  // for display
       updateOsc2PulseLevel(1);
@@ -7570,9 +7337,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1PulseLevel] = value;
       } else {
         lowerData[P_osc1PulseLevel] = value;
-        if (wholemode) {
-          upperData[P_osc1PulseLevel] = value;
-        }
       }
       osc1PulseLevelstr = value;  // for display
       updateOsc1PulseLevel(1);
@@ -7583,9 +7347,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2TriangleLevel] = value;
       } else {
         lowerData[P_osc2TriangleLevel] = value;
-        if (wholemode) {
-          upperData[P_osc2TriangleLevel] = value;
-        }
       }
       osc2TriangleLevelstr = value;  // for display
       updateOsc2TriangleLevel(1);
@@ -7596,9 +7357,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1SubLevel] = value;
       } else {
         lowerData[P_osc1SubLevel] = value;
-        if (wholemode) {
-          upperData[P_osc1SubLevel] = value;
-        }
       }
       osc1SubLevelstr = value;  // for display
       updateOsc1SubLevel(1);
@@ -7609,9 +7367,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc2envDepth] = value;
       } else {
         lowerData[P_osc2envDepth] = value;
-        if (wholemode) {
-          upperData[P_osc2envDepth] = value;
-        }
       }
       osc2envDepthstr = value;  // for display
       updateOsc2EnvDepth(1);
@@ -7622,9 +7377,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_LFO1Delay] = value;
       } else {
         lowerData[P_LFO1Delay] = value;
-        if (wholemode) {
-          upperData[P_LFO1Delay] = value;
-        }
       }
       LFO1Delaystr = value;  // for display
       updateLFO1Delay(1);
@@ -7635,9 +7387,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_LFO3Delay] = value;
       } else {
         lowerData[P_LFO3Delay] = value;
-        if (wholemode) {
-          upperData[P_LFO3Delay] = value;
-        }
       }
       LFO3Delaystr = value;  // for display
       updateLFO3Delay(1);
@@ -7648,9 +7397,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_LFO1Slope] = value;
       } else {
         lowerData[P_LFO1Slope] = value;
-        if (wholemode) {
-          upperData[P_LFO1Slope] = value;
-        }
       }
       LFO1Slopestr = value;  // for display
       updateLFO1Slope(1);
@@ -7663,10 +7409,6 @@ void myControlChange(byte channel, byte control, int value) {
       } else {
         lowerData[P_filterCutoff] = value;
         oldfilterCutoffL = value;
-        if (wholemode) {
-          upperData[P_filterCutoff] = value;
-          oldfilterCutoffU = value;
-        }
       }
       filterCutoffstr = FILTERCUTOFF[value];
       updateFilterCutoff(1);
@@ -7677,9 +7419,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterLFO] = value;
       } else {
         lowerData[P_filterLFO] = value;
-        if (wholemode) {
-          upperData[P_filterLFO] = value;
-        }
       }
       filterLFOstr = value;
       updatefilterLFO(1);
@@ -7690,9 +7429,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterRes] = value;
       } else {
         lowerData[P_filterRes] = value;
-        if (wholemode) {
-          upperData[P_filterRes] = value;
-        }
       }
       filterResstr = int(value);
       updatefilterRes(1);
@@ -7703,9 +7439,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterType] = value;
       } else {
         lowerData[P_filterType] = value;
-        if (wholemode) {
-          upperData[P_filterType] = value;
-        }
       }
       updateFilterType(1);
       break;
@@ -7715,9 +7448,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterEGlevel] = value;
       } else {
         lowerData[P_filterEGlevel] = value;
-        if (wholemode) {
-          upperData[P_filterEGlevel] = value;
-        }
       }
       filterEGlevelstr = int(value);
       updatefilterEGlevel(1);
@@ -7728,9 +7458,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_LFO1Rate] = value;
       } else {
         lowerData[P_LFO1Rate] = value;
-        if (wholemode) {
-          upperData[P_LFO1Rate] = value;
-        }
       }
       LFO1Ratestr = LFOTEMPO[value];  // for display
       updateLFO1Rate(1);
@@ -7747,9 +7474,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_LFO3Rate] = value;
       } else {
         lowerData[P_LFO3Rate] = value;
-        if (wholemode) {
-          upperData[P_LFO3Rate] = value;
-        }
       }
       LFO3Ratestr = LFOTEMPO[value];  // for display
       updateLFO3Rate(1);
@@ -7760,9 +7484,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_modWheelDepth] = value;
       } else {
         lowerData[P_modWheelDepth] = value;
-        if (wholemode) {
-          upperData[P_modWheelDepth] = value;
-        }
       }
       modWheelDepthstr = value;  // for display
       updatemodWheelDepth(1);
@@ -7773,9 +7494,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_PitchBendLevel] = value;
       } else {
         lowerData[P_PitchBendLevel] = value;
-        if (wholemode) {
-          upperData[P_PitchBendLevel] = value;
-        }
       }
       PitchBendLevelstr = value;  // for display
       updatePitchBendDepth(1);
@@ -7786,9 +7504,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_effectPot1] = value;
       } else {
         lowerData[P_effectPot1] = value;
-        if (wholemode) {
-          upperData[P_effectPot1] = value;
-        }
       }
       effectPot1str = value;  // for display
       updateeffectPot1(1);
@@ -7799,9 +7514,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_effectPot2] = value;
       } else {
         lowerData[P_effectPot2] = value;
-        if (wholemode) {
-          upperData[P_effectPot2] = value;
-        }
       }
       effectPot2str = value;  // for display
       updateeffectPot2(1);
@@ -7812,9 +7524,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_effectPot3] = value;
       } else {
         lowerData[P_effectPot3] = value;
-        if (wholemode) {
-          upperData[P_effectPot3] = value;
-        }
       }
       effectPot3str = value;  // for display
       updateeffectPot3(1);
@@ -7825,9 +7534,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_vcfATDepth] = value;
       } else {
         lowerData[P_vcfATDepth] = value;
-        if (wholemode) {
-          upperData[P_vcfATDepth] = value;
-        }
       }
       vcfATDepthstr = value;  // for display
       updatevcfATDepth(1);
@@ -7838,9 +7544,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_effectsMix] = value;
       } else {
         lowerData[P_effectsMix] = value;
-        if (wholemode) {
-          upperData[P_effectsMix] = value;
-        }
       }
       effectsMixstr = LINEARCENTREZERO[value];  // for display
       updateeffectsMix(1);
@@ -7851,9 +7554,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_pitchAttack] = value;
       } else {
         lowerData[P_pitchAttack] = value;
-        if (wholemode) {
-          upperData[P_pitchAttack] = value;
-        }
       }
       pitchAttackstr = ENVTIMES[value];
       updatepitchAttack(1);
@@ -7864,9 +7564,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_pitchDecay] = value;
       } else {
         lowerData[P_pitchDecay] = value;
-        if (wholemode) {
-          upperData[P_pitchDecay] = value;
-        }
       }
       pitchDecaystr = ENVTIMES[value];
       updatepitchDecay(1);
@@ -7877,9 +7574,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_pitchSustain] = value;
       } else {
         lowerData[P_pitchSustain] = value;
-        if (wholemode) {
-          upperData[P_pitchSustain] = value;
-        }
       }
       pitchSustainstr = LINEAR_FILTERMIXERSTR[value];
       updatepitchSustain(1);
@@ -7890,9 +7584,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_pitchRelease] = value;
       } else {
         lowerData[P_pitchRelease] = value;
-        if (wholemode) {
-          upperData[P_pitchRelease] = value;
-        }
       }
       pitchReleasestr = ENVTIMES[value];
       updatepitchRelease(1);
@@ -7903,9 +7594,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterAttack] = value;
       } else {
         lowerData[P_filterAttack] = value;
-        if (wholemode) {
-          upperData[P_filterAttack] = value;
-        }
       }
       filterAttackstr = ENVTIMES[value];
       updatefilterAttack(1);
@@ -7916,9 +7604,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterDecay] = value;
       } else {
         lowerData[P_filterDecay] = value;
-        if (wholemode) {
-          upperData[P_filterDecay] = value;
-        }
       }
       filterDecaystr = ENVTIMES[value];
       updatefilterDecay(1);
@@ -7929,9 +7614,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterSustain] = value;
       } else {
         lowerData[P_filterSustain] = value;
-        if (wholemode) {
-          upperData[P_filterSustain] = value;
-        }
       }
       filterSustainstr = LINEAR_FILTERMIXERSTR[value];
       updatefilterSustain(1);
@@ -7942,9 +7624,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterRelease] = value;
       } else {
         lowerData[P_filterRelease] = value;
-        if (wholemode) {
-          upperData[P_filterRelease] = value;
-        }
       }
       filterReleasestr = ENVTIMES[value];
       updatefilterRelease(1);
@@ -7955,9 +7634,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_ampAttack] = value;
       } else {
         lowerData[P_ampAttack] = value;
-        if (wholemode) {
-          upperData[P_ampAttack] = value;
-        }
       }
       ampAttackstr = ENVTIMES[value];
       updateampAttack(1);
@@ -7970,10 +7646,6 @@ void myControlChange(byte channel, byte control, int value) {
       } else {
         lowerData[P_ampDecay] = value;
         lowerData[P_oldampDecay] = value;
-        if (wholemode) {
-          upperData[P_ampDecay] = value;
-          upperData[P_oldampDecay] = value;
-        }
       }
       ampDecaystr = ENVTIMES[value];
       updateampDecay(1);
@@ -7986,10 +7658,6 @@ void myControlChange(byte channel, byte control, int value) {
       } else {
         lowerData[P_ampSustain] = value;
         lowerData[P_oldampSustain] = value;
-        if (wholemode) {
-          upperData[P_ampSustain] = value;
-          upperData[P_oldampSustain] = value;
-        }
       }
       ampSustainstr = LINEAR_FILTERMIXERSTR[value];
       updateampSustain(1);
@@ -8002,10 +7670,6 @@ void myControlChange(byte channel, byte control, int value) {
       } else {
         lowerData[P_ampRelease] = value;
         lowerData[P_oldampRelease] = value;
-        if (wholemode) {
-          upperData[P_ampRelease] = value;
-          upperData[P_oldampRelease] = value;
-        }
       }
       ampReleasestr = ENVTIMES[value];
       updateampRelease(1);
@@ -8016,9 +7680,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_volumeControl] = value;
       } else {
         lowerData[P_volumeControl] = value;
-        if (wholemode) {
-          upperData[P_volumeControl] = value;
-        }
       }
       volumeControlstr = value;
       updatevolumeControl(1);
@@ -8029,9 +7690,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterLevel1] = value;
       } else {
         lowerData[P_filterLevel1] = value;
-        if (wholemode) {
-          upperData[P_filterLevel1] = value;
-        }
       }
       filterLevel1str = value;
       updatefilterLevel1(1);
@@ -8042,9 +7700,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filterLevel2] = value;
       } else {
         lowerData[P_filterLevel2] = value;
-        if (wholemode) {
-          upperData[P_filterLevel2] = value;
-        }
       }
       filterLevel2str = value;
       updatefilterLevel2(1);
@@ -8055,9 +7710,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_osc1sawDetune] = value;
       } else {
         lowerData[P_osc1sawDetune] = value;
-        if (wholemode) {
-          upperData[P_osc1sawDetune] = value;
-        }
       }
       osc1sawDetunestr = value;
       updateosc1sawDetune(1);
@@ -8068,9 +7720,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_keytrack] = value;
       } else {
         lowerData[P_keytrack] = value;
-        if (wholemode) {
-          upperData[P_keytrack] = value;
-        }
       }
       keytrackstr = value;
       updatekeytrack(1);
@@ -8082,9 +7731,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_amDepth] = value;
       } else {
         lowerData[P_amDepth] = value;
-        if (wholemode) {
-          upperData[P_amDepth] = value;
-        }
       }
       amDepthstr = value;
       updateamDepth(1);
@@ -8143,9 +7789,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_dco_at_SW] = value;
       } else {
         lowerData[P_dco_at_SW] = value;
-        if (wholemode) {
-          upperData[P_dco_at_SW] = value;
-        }
       }
       updatedco_at_SW(1);
       break;
@@ -8155,9 +7798,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_filter_at_SW] = value;
       } else {
         lowerData[P_filter_at_SW] = value;
-        if (wholemode) {
-          upperData[P_filter_at_SW] = value;
-        }
       }
       updatefilter_at_SW(1);
       break;
@@ -8391,9 +8031,6 @@ void myControlChange(byte channel, byte control, int value) {
             lowerData[P_LFO1Waveform] = 127;
             break;
         }
-        if (wholemode) {
-          upperData[P_LFO1Waveform] = lowerData[P_LFO1Waveform];
-        }
       }
       updateLFO1Waveform(1);
       break;
@@ -8427,9 +8064,6 @@ void myControlChange(byte channel, byte control, int value) {
             lowerData[P_LFO2Waveform] = 127;
             break;
         }
-        if (wholemode) {
-          upperData[P_LFO2Waveform] = lowerData[P_LFO2Waveform];
-        }
       }
       updateLFO2Waveform(1);
       break;
@@ -8439,9 +8073,6 @@ void myControlChange(byte channel, byte control, int value) {
         upperData[P_LFO3Waveform] = value;
       } else {
         lowerData[P_LFO3Waveform] = value;
-        if (wholemode) {
-          upperData[P_LFO3Waveform] = value;
-        }
       }
       updateLFO3Waveform(1);
       break;
@@ -8622,17 +8253,17 @@ void setCurrentPatchData(String data[]) {
     lowerParamsToDisplay();
     setAllButtons();
 
-    if (wholemode) {
+    // if (wholemode) {
 
-      // Update previous values and pick-up flags
-      for (int i = 1; i <= 105; i++) {
-        upperData[i] = lowerData[i];  // Store previous value
-      }
+    //   // Update previous values and pick-up flags
+    //   for (int i = 1; i <= 105; i++) {
+    //     upperData[i] = lowerData[i];  // Store previous value
+    //   }
 
-      oldfilterCutoffU = upperData[P_filterCutoff];
-      upperParamsToDisplay();
-      setAllButtons();
-    }
+    //   oldfilterCutoffU = upperData[P_filterCutoff];
+    //   upperParamsToDisplay();
+    //   setAllButtons();
+    // }
   }
 
   updatePatchname();
@@ -8679,6 +8310,7 @@ void upperParamsToDisplay() {
   updateLFO2Rate(0);
   updateLFO3Rate(0);
   updateLFO3Delay(0);
+  updateLFO3Waveform(0);
   updateeffectPot1(0);
   updateeffectPot2(0);
   updateeffectPot3(0);
@@ -8695,7 +8327,6 @@ void upperParamsToDisplay() {
   updateATDepth(0);
   updateamDepth(0);
   updateFilterType(0);
-  updateLFO3Waveform(0);
   updateeffectBankSW(0);
   updateeffectNumSW(0);
   updatearpRate(0);
@@ -8746,6 +8377,7 @@ void lowerParamsToDisplay() {
   updateLFO2Rate(0);
   updateLFO3Rate(0);
   updateLFO3Delay(0);
+  updateLFO3Waveform(0);  
   updateeffectPot1(0);
   updateeffectPot2(0);
   updateeffectPot3(0);
@@ -8762,7 +8394,6 @@ void lowerParamsToDisplay() {
   updateamDepth(0);
   updateATDepth(0);
   updateFilterType(0);
-  updateLFO3Waveform(0);
   updateeffectBankSW(0);
   updateeffectNumSW(0);
   updatearpRate(0);
@@ -8881,10 +8512,12 @@ void midiCCVoiceUpper(byte cc, byte value) {
 
 void midiCCDisplay(byte cc, byte value) {
   MIDI6.sendControlChange(cc, value, 1);  //MIDI DIN to panel for switches
+  delay(1);
 }
 
 void midiCCDisplaySW(byte cc, byte value) {
   MIDI6.sendControlChange(cc, value, 2);  //MIDI DIN to panel for switches
+  delay(1);
 }
 
 void showSettingsPage() {
