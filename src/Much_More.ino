@@ -4417,12 +4417,26 @@ FLASHMEM void updateeffectPot3(boolean announce) {
     midiCCVoiceUpper(VB_EFFECT_POT3, upperData[P_effectPot3]);
     midiCCOut(CCeffectPot3, upperData[P_effectPot3]);
     midiCCDisplay(CCeffectPot3, upperData[P_effectPot3]);
+    if (upperData[P_effectPot3] > 63) {
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, HIGH);
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, LOW);
+    } else {
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, LOW);
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, HIGH); 
+    }
   } else {
     midiCCVoiceLower(VB_EFFECT_POT3, lowerData[P_effectPot3]);
     midiCCOut(CCeffectPot3, lowerData[P_effectPot3]);
     midiCCDisplay(CCeffectPot3, lowerData[P_effectPot3]);
     if (wholemode) {
       midiCCVoiceUpper(VB_EFFECT_POT3, lowerData[P_effectPot3]);
+    }
+    if (lowerData[P_effectPot3] > 63) {
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, HIGH);
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, LOW);
+    } else {
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, LOW);
+      mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, HIGH); 
     }
   }
 }
@@ -6179,7 +6193,15 @@ void changeSpeed() {
       } else {
         upperfootPedal = false;
         upperfast = false;
+
       }
+    }
+    if (upperData[P_effectPot3] > 63) {
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, HIGH);
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, LOW);
+          } else {
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, LOW);
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, HIGH); 
     }
   }
 
@@ -6192,6 +6214,9 @@ void changeSpeed() {
           lowerData[P_effectPot3] = lowerslowpot3;
         if (lowerData[P_effectPot3] != lowerLastSentPot3) {
           midiCCVoiceLower(VB_EFFECT_POT3, lowerData[P_effectPot3]);
+          if (wholemode) {
+            midiCCVoiceUpper(VB_EFFECT_POT3, lowerData[P_effectPot3]);
+          }
           midiCCDisplay(CCeffectPot3, lowerData[P_effectPot3]);
           lowerLastSentPot3 = lowerData[P_effectPot3];
         }
@@ -6206,6 +6231,9 @@ void changeSpeed() {
           lowerData[P_effectPot3] = lowerfastpot3;
         if (lowerData[P_effectPot3] != lowerLastSentPot3) {
           midiCCVoiceLower(VB_EFFECT_POT3, lowerData[P_effectPot3]);
+          if (wholemode) {
+            midiCCVoiceUpper(VB_EFFECT_POT3, lowerData[P_effectPot3]);
+          }
           midiCCDisplay(CCeffectPot3, lowerData[P_effectPot3]);
           lowerLastSentPot3 = lowerData[P_effectPot3];
         }
@@ -6215,6 +6243,13 @@ void changeSpeed() {
       }
     }
   }
+  if (lowerData[P_effectPot3] > 63) {
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, HIGH);
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, LOW);
+          } else {
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_GREEN, LOW);
+            mcp14.digitalWrite(EFFECT_ROTARY_LED_RED, HIGH); 
+    }
 }
 
 FLASHMEM void updatefx_Bypass(boolean announce) {
