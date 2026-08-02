@@ -3,8 +3,6 @@
 void settingsMIDICh();
 void settingsSplitPoint();
 void settingsSplitTrans();
-void settingsAfterTouchU();
-void settingsAfterTouchL();
 void settingsEncoderDir();
 void settingsEncoderAccelerate();
 void settingsEncoderStepMode();
@@ -12,8 +10,6 @@ void settingsEncoderStepMode();
 int currentIndexMIDICh();
 int currentIndexSplitPoint();
 int currentIndexSplitTrans();
-int currentIndexAfterTouchU();
-int currentIndexAfterTouchL();
 int currentIndexEncoderDir();
 int currentIndexEncoderAccelerate();
 int currentIndexEncoderStepMode();
@@ -66,24 +62,6 @@ void settingsMIDICh(int index, const char *value) {
   storeMidiChannel(midiChannel);
 }
 
-void settingsAfterTouchU(int index, const char *value) {
-  if (strcmp(value, "Off") == 0) upperData[60] = 0;
-  if (strcmp(value, "DCO Mod") == 0) upperData[60] = 1;
-  if (strcmp(value, "CutOff Freq") == 0) upperData[60] = 2;
-  if (strcmp(value, "VCF Mod") == 0) upperData[60] = 3;
-  if (strcmp(value, "VCA Mod") == 0) upperData[60] = 4;
-  storeAfterTouchU(upperData[60]);
-}
-
-void settingsAfterTouchL(int index, const char *value) {
-  if (strcmp(value, "Off") == 0) lowerData[60] = 0;
-  if (strcmp(value, "DCO Mod") == 0) lowerData[60] = 1;
-  if (strcmp(value, "CutOff Freq") == 0) lowerData[60] = 2;
-  if (strcmp(value, "VCF Mod") == 0) lowerData[60] = 3;
-  if (strcmp(value, "VCA Mod") == 0) lowerData[60] = 4;
-  storeAfterTouchL(lowerData[60]);
-}
-
 void settingsEncoderDir(int index, const char *value) {
   if (strcmp(value, "Type 1") == 0) {
     encCW = true;
@@ -123,14 +101,6 @@ int currentIndexSplitPoint() {
   return getSplitPoint();
 }
 
-int currentIndexAfterTouchU() {
-  return getAfterTouchU();
-}
-
-int currentIndexAfterTouchL() {
-  return getAfterTouchL();
-}
-
 int currentIndexEncoderDir() {
   return getEncoderDir() ? 0 : 1;
 }
@@ -148,8 +118,6 @@ void setUpSettings() {
   settings::append(settings::SettingsOption{ "MIDI Ch.", { "All", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "\0" }, settingsMIDICh, currentIndexMIDICh });
   settings::append(settings::SettingsOption{ "Split Point", { "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "\0" }, settingsSplitPoint, currentIndexSplitPoint });
   settings::append(settings::SettingsOption{ "Split Trans", { "-2 Octave", "-1 Octave", "Original", "+1 Octave", "+2 Octave", "\0" }, settingsSplitTrans, currentIndexSplitTrans });
-  settings::append(settings::SettingsOption{ "AfterTouch U", { "Off", "DCO Mod", "CutOff Freq", "VCF Mod", "VCA Mod", "\0" }, settingsAfterTouchU, currentIndexAfterTouchU });
-  settings::append(settings::SettingsOption{ "AfterTouch L", { "Off", "DCO Mod", "CutOff Freq", "VCF Mod", "VCA Mod", "\0" }, settingsAfterTouchL, currentIndexAfterTouchL });
   settings::append(settings::SettingsOption{ "Encoder", { "Type 1", "Type 2", "\0" }, settingsEncoderDir, currentIndexEncoderDir });
   settings::append(settings::SettingsOption{ "Enc Speed", {"No", "Yes", "\0"}, settingsEncoderAccelerate, currentIndexEncoderAccelerate});
   settings::append(settings::SettingsOption{ "Enc Step", {"Full", "Half", "\0"}, settingsEncoderStepMode, currentIndexEncoderStepMode});

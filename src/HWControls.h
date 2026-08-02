@@ -215,7 +215,7 @@ Button arp_rand_Button = Button(&mcp1, 8, ARP_RAND_BUTTON, &mainButtonChanged);
 
 Button arp_start_stop_Button = Button(&mcp2, 1, ARP_START_STOP_BUTTON, &mainButtonChanged);
 Button arp_latch_Button = Button(&mcp2, 0, ARP_LATCH_BUTTON, &mainButtonChanged);
-Button filter_at_Button = Button(&mcp2, 8, FILTER_AT_BUTTON, &mainButtonChanged);
+Button filter_at_Button = Button(&mcp8, 11, FILTER_AT_BUTTON, &mainButtonChanged);
 
 Button mode_Button = Button(&mcp3, 0, MODE_BUTTON, &mainButtonChanged);
 Button hold_Button = Button(&mcp3, 1, HOLD_BUTTON, &mainButtonChanged);
@@ -238,7 +238,7 @@ Button dco2_sync_Button = Button(&mcp7, 10, DCO2_SYNC_BUTTON, &mainButtonChanged
 
 Button vcf_type_Button = Button(&mcp8, 6, VCF_TYPE_BUTTON, &mainButtonChanged);
 Button noise_src_Button = Button(&mcp8, 8, NOISE_SRC_BUTTON, &mainButtonChanged);
-Button vcf_pole_Button = Button(&mcp8, 11, VCF_POLE_BUTTON, &mainButtonChanged);
+Button vcf_pole_Button = Button(&mcp2, 8, VCF_POLE_BUTTON, &mainButtonChanged);
 Button vcf_eg_inv_Button = Button(&mcp8, 12, VCF_EG_INV_BUTTON, &mainButtonChanged);
 Button vcf_keytrack_Button = Button(&mcp8, 13, VCF_KEYTRACK_BUTTON, &mainButtonChanged);
 
@@ -417,7 +417,7 @@ Button *allButtons[] = {
 #define PRIORITY_LED_RED 15
 
 // GP5
-#define FILTER_AT_LED 7
+#define VCF_POLE_LED 7
 #define DCO_AT_LED 12
 #define DCO1_OCT_LED_GREEN 14
 #define DCO1_OCT_LED_RED 15
@@ -433,7 +433,7 @@ Button *allButtons[] = {
 #define DCO2_OCT_LED_GREEN 15
 
 // GP8
-#define VCF_POLE_LED 7
+#define FILTER_AT_LED 7
 #define VCF_EG_INV_LED 14
 #define VCF_KEYTRACK_LED 15
 

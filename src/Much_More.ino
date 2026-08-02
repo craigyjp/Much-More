@@ -306,10 +306,6 @@ void setup() {
   MIDI8.begin();
   MIDI8.turnThruOn(midi::Thru::Mode::Off);
 
-  //Read Aftertouch from EEPROM, this can be set individually by each patch.
-  upperData[P_AfterTouchDest] = getAfterTouchU();
-  lowerData[P_AfterTouchDest] = getAfterTouchL();
-
   splitPoint = getSplitPoint();
   splitPoint = (splitPoint + 36);
 
@@ -5500,7 +5496,7 @@ FLASHMEM void updateeffectNumSW(boolean announce) {
 }
 
 FLASHMEM void updateeffectBankSW(boolean announce) {
-  int bank = upperSW ? upperData[P_effectBank] : lowerData[P_effectBank];
+  bank = upperSW ? upperData[P_effectBank] : lowerData[P_effectBank];
 
   if (announce) {
     showCurrentParameterPage("Effects", "Bank " + String(bank + 1));
@@ -5508,9 +5504,6 @@ FLASHMEM void updateeffectBankSW(boolean announce) {
   }
 
   if (upperSW) {
-    // // Step 1: Enter external mode
-    // midiCCDCOUpper(CC_FV1_INTERNAL, 127);
-    // delay(10);
 
     // Step 2: Reset all CS lines
     midiCCDCOUpper(CC_FV1_BANK_0, 0);
@@ -5521,17 +5514,17 @@ FLASHMEM void updateeffectBankSW(boolean announce) {
     if (bank == 0) {
       // Internal ROM selected
       midiCCDCOUpper(CC_FV1_INTERNAL, 0);
-      delay(10);
+      delay(10);     
     } else {
       // Select only the chosen EEPROM
       if (bank == 1) {
         midiCCDCOUpper(CC_FV1_BANK_0, 0);
         midiCCDCOUpper(CC_FV1_BANK_1, 127);
-        midiCCDCOUpper(CC_FV1_BANK_2, 127);
+        midiCCDCOUpper(CC_FV1_BANK_2, 127);      
       } else if (bank == 2) {
         midiCCDCOUpper(CC_FV1_BANK_0, 0);
         midiCCDCOUpper(CC_FV1_BANK_1, 127);
-        midiCCDCOUpper(CC_FV1_BANK_2, 127);
+        midiCCDCOUpper(CC_FV1_BANK_2, 127);      
       } else if (bank == 3) {
         midiCCDCOUpper(CC_FV1_BANK_0, 127);
         midiCCDCOUpper(CC_FV1_BANK_1, 127);
@@ -5542,15 +5535,12 @@ FLASHMEM void updateeffectBankSW(boolean announce) {
       midiCCDCOUpper(CC_FV1_INTERNAL, 127);
     }
   } else {
-    // // Step 1: Enter external mode
-    // midiCCDCOLower(CC_FV1_INTERNAL, 127);
 
     // Step 2: Reset all CS lines
     midiCCDCOLower(CC_FV1_BANK_0, 0);
     midiCCDCOLower(CC_FV1_BANK_1, 127);
     midiCCDCOLower(CC_FV1_BANK_2, 127);
     if (wholemode) {
-      // midiCCDCOUpper(CC_FV1_INTERNAL, 127);
 
       // Step 2: Reset all CS lines
       midiCCDCOUpper(CC_FV1_BANK_0, 0);
@@ -5603,10 +5593,10 @@ FLASHMEM void updateeffectBankSW(boolean announce) {
         midiCCDCOUpper(CC_FV1_INTERNAL, 127);
       }
     }
-
     // Send MIDI
     midiCCDisplaySW(CCeffectBankSW, bank);
     midiCCOut(CCeffectBankSW, bank);
+
   }
 }
 
@@ -5620,7 +5610,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 0);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
-      midiCCDisplaySW(CClfoMult, 0);
+      //midiCCDisplaySW(CClfoMult, 0);
       midiCCOut(CClfoMult, 0);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, LOW);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, LOW);
@@ -5632,7 +5622,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 127);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
-      midiCCDisplaySW(CClfoMult, 1);
+      //midiCCDisplaySW(CClfoMult, 1);
       midiCCOut(CClfoMult, 1);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, HIGH);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, LOW);
@@ -5644,7 +5634,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 0);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 127);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
-      midiCCDisplaySW(CClfoMult, 2);
+      //midiCCDisplaySW(CClfoMult, 2);
       midiCCOut(CClfoMult, 2);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, LOW);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, HIGH);
@@ -5656,7 +5646,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
       midiCCVoiceUpper(VB_MULTIPLIER_BIT0, 127);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 127);
       midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
-      midiCCDisplaySW(CClfoMult, 3);
+      //midiCCDisplaySW(CClfoMult, 3);
       midiCCOut(CClfoMult, 3);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, HIGH);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, HIGH);
@@ -5675,7 +5665,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
         midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
       }
-      midiCCDisplaySW(CClfoMult, 0);
+      //midiCCDisplaySW(CClfoMult, 0);
       midiCCOut(CClfoMult, 0);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, LOW);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, LOW);
@@ -5692,7 +5682,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
         midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
       }
-      midiCCDisplaySW(CClfoMult, 1);
+      //midiCCDisplaySW(CClfoMult, 1);
       midiCCOut(CClfoMult, 1);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, HIGH);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, LOW);
@@ -5709,7 +5699,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
         midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
       }
-      midiCCDisplaySW(CClfoMult, 2);
+      //midiCCDisplaySW(CClfoMult, 2);
       midiCCOut(CClfoMult, 2);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, LOW);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, HIGH);
@@ -5726,7 +5716,7 @@ FLASHMEM void updatelfoMultiplier(boolean announce) {
         midiCCVoiceUpper(VB_MULTIPLIER_BIT1, 0);
         midiCCVoiceUpper(VB_MULTIPLIER_BIT2, 0);
       }
-      midiCCDisplaySW(CClfoMult, 3);
+      //midiCCDisplaySW(CClfoMult, 3);
       midiCCOut(CClfoMult, 3);
       mcp13.digitalWrite(LFO3_MULT_LED_RED, HIGH);
       mcp13.digitalWrite(LFO3_MULT_LED_GREEN, HIGH);
@@ -5797,7 +5787,7 @@ FLASHMEM void updatefilterPoleSwitch(boolean announce) {
       midiCCVoiceUpper(VB_FILTER_POLE, 127);
       midiCCOut(CCfilterPoleSW, 127);
       midiCCDisplaySW(CCfilterPoleSW, 1);
-      mcp8.digitalWrite(VCF_POLE_LED, HIGH);
+      mcp5.digitalWrite(VCF_POLE_LED, HIGH);
     } else {
       if (announce) {
         updateFilterType(1);
@@ -5805,7 +5795,7 @@ FLASHMEM void updatefilterPoleSwitch(boolean announce) {
       midiCCVoiceUpper(VB_FILTER_POLE, 0);
       midiCCOut(CCfilterPoleSW, 0);
       midiCCDisplaySW(CCfilterPoleSW, 0);
-      mcp8.digitalWrite(VCF_POLE_LED, LOW);
+      mcp5.digitalWrite(VCF_POLE_LED, LOW);
     }
   } else {
     if (lowerData[P_filterPoleSW] == 1) {
@@ -5818,7 +5808,7 @@ FLASHMEM void updatefilterPoleSwitch(boolean announce) {
       }
       midiCCOut(CCfilterPoleSW, 127);
       midiCCDisplaySW(CCfilterPoleSW, 1);
-      mcp8.digitalWrite(VCF_POLE_LED, HIGH);
+      mcp5.digitalWrite(VCF_POLE_LED, HIGH);
     } else {
       if (announce) {
         updateFilterType(1);
@@ -5829,7 +5819,7 @@ FLASHMEM void updatefilterPoleSwitch(boolean announce) {
       }
       midiCCOut(CCfilterPoleSW, 0);
       midiCCDisplaySW(CCfilterPoleSW, 0);
-      mcp8.digitalWrite(VCF_POLE_LED, LOW);
+      mcp5.digitalWrite(VCF_POLE_LED, LOW);
     }
   }
 }
@@ -5844,7 +5834,7 @@ FLASHMEM void updatefilterLoop(boolean announce) {
         }
         midiCCVoiceUpper(VB_FILTER_LOOP_BIT0, 0);
         midiCCVoiceUpper(VB_FILTER_LOOP_BIT1, 0);
-        midiCCDisplaySW(CCFilterLoop, 0);
+        //midiCCDisplaySW(CCFilterLoop, 0);
         midiCCOut(CCFilterLoop, 0);
         mcp9.digitalWrite(VCF_LOOP_LED_RED, LOW);
         mcp10.digitalWrite(VCF_LOOP_LED_GREEN, LOW);
@@ -5857,7 +5847,7 @@ FLASHMEM void updatefilterLoop(boolean announce) {
         }
         midiCCVoiceUpper(VB_FILTER_LOOP_BIT0, 127);
         midiCCVoiceUpper(VB_FILTER_LOOP_BIT1, 0);
-        midiCCDisplaySW(CCFilterLoop, 1);
+        //midiCCDisplaySW(CCFilterLoop, 1);
         midiCCOut(CCFilterLoop, 63);
         mcp9.digitalWrite(VCF_LOOP_LED_RED, HIGH);
         mcp10.digitalWrite(VCF_LOOP_LED_GREEN, LOW);
@@ -5870,7 +5860,7 @@ FLASHMEM void updatefilterLoop(boolean announce) {
         }
         midiCCVoiceUpper(VB_FILTER_LOOP_BIT0, 0);
         midiCCVoiceUpper(VB_FILTER_LOOP_BIT1, 127);
-        midiCCDisplaySW(CCFilterLoop, 2);
+        //midiCCDisplaySW(CCFilterLoop, 2);
         midiCCOut(CCFilterLoop, 127);
         mcp9.digitalWrite(VCF_LOOP_LED_RED, LOW);
         mcp10.digitalWrite(VCF_LOOP_LED_GREEN, HIGH);
@@ -5889,7 +5879,7 @@ FLASHMEM void updatefilterLoop(boolean announce) {
           midiCCVoiceUpper(VB_FILTER_LOOP_BIT0, 0);
           midiCCVoiceUpper(VB_FILTER_LOOP_BIT1, 0);
         }
-        midiCCDisplaySW(CCFilterLoop, 0);
+        //midiCCDisplaySW(CCFilterLoop, 0);
         midiCCOut(CCFilterLoop, 0);
         mcp9.digitalWrite(VCF_LOOP_LED_RED, LOW);
         mcp10.digitalWrite(VCF_LOOP_LED_GREEN, LOW);
@@ -5906,7 +5896,7 @@ FLASHMEM void updatefilterLoop(boolean announce) {
           midiCCVoiceUpper(VB_FILTER_LOOP_BIT0, 127);
           midiCCVoiceUpper(VB_FILTER_LOOP_BIT1, 0);
         }
-        midiCCDisplaySW(CCFilterLoop, 1);
+        //midiCCDisplaySW(CCFilterLoop, 1);
         midiCCOut(CCFilterLoop, 63);
         mcp9.digitalWrite(VCF_LOOP_LED_RED, HIGH);
         mcp10.digitalWrite(VCF_LOOP_LED_GREEN, LOW);
@@ -5923,7 +5913,7 @@ FLASHMEM void updatefilterLoop(boolean announce) {
           midiCCVoiceUpper(VB_FILTER_LOOP_BIT0, 0);
           midiCCVoiceUpper(VB_FILTER_LOOP_BIT1, 127);
         }
-        midiCCDisplaySW(CCFilterLoop, 2);
+        //midiCCDisplaySW(CCFilterLoop, 2);
         midiCCOut(CCFilterLoop, 127);
         mcp9.digitalWrite(VCF_LOOP_LED_RED, LOW);
         mcp10.digitalWrite(VCF_LOOP_LED_GREEN, HIGH);
@@ -5941,7 +5931,7 @@ FLASHMEM void updatefilterEGinv(boolean announce) {
       }
       midiCCVoiceUpper(VB_EG_INVERT, 0);
       midiCCOut(CCfilterEGinv, 0);
-      midiCCDisplaySW(CCfilterEGinv, 0);
+      //midiCCDisplaySW(CCfilterEGinv, 0);
       mcp8.digitalWrite(VCF_EG_INV_LED, LOW);
     } else {
       if (announce) {
@@ -5950,7 +5940,7 @@ FLASHMEM void updatefilterEGinv(boolean announce) {
       }
       midiCCVoiceUpper(VB_EG_INVERT, 127);
       midiCCOut(CCfilterEGinv, 127);
-      midiCCDisplaySW(CCfilterEGinv, 127);
+      //midiCCDisplaySW(CCfilterEGinv, 127);
       mcp8.digitalWrite(VCF_EG_INV_LED, HIGH);
     }
   } else {
@@ -5964,7 +5954,7 @@ FLASHMEM void updatefilterEGinv(boolean announce) {
         midiCCVoiceUpper(VB_EG_INVERT, 0);
       }
       midiCCOut(CCfilterEGinv, 0);
-      midiCCDisplaySW(CCfilterEGinv, 0);
+      //midiCCDisplaySW(CCfilterEGinv, 0);
       mcp8.digitalWrite(VCF_EG_INV_LED, LOW);
 
     } else {
@@ -5977,7 +5967,7 @@ FLASHMEM void updatefilterEGinv(boolean announce) {
         midiCCVoiceUpper(VB_EG_INVERT, 127);
       }
       midiCCOut(CCfilterEGinv, 127);
-      midiCCDisplaySW(CCfilterEGinv, 127);
+      //midiCCDisplaySW(CCfilterEGinv, 127);
       mcp8.digitalWrite(VCF_EG_INV_LED, HIGH);
     }
   }
@@ -5992,7 +5982,7 @@ FLASHMEM void updatekeyTrackSW(boolean announce) {
       }
       midiCCDCOUpper(CC_KEYTRACK_SW, 0);
       midiCCOut(CCkeyTrackSW, 0);
-      midiCCDisplaySW(CCkeyTrackSW, 0);
+      //midiCCDisplaySW(CCkeyTrackSW, 0);
       mcp8.digitalWrite(VCF_KEYTRACK_LED, LOW);
     } else {
       if (announce) {
@@ -6001,7 +5991,7 @@ FLASHMEM void updatekeyTrackSW(boolean announce) {
       }
       midiCCDCOUpper(CC_KEYTRACK_SW, 127);
       midiCCOut(CCkeyTrackSW, 127);
-      midiCCDisplaySW(CCkeyTrackSW, 1);
+      //midiCCDisplaySW(CCkeyTrackSW, 1);
       mcp8.digitalWrite(VCF_KEYTRACK_LED, HIGH);
     }
   } else {
@@ -6012,7 +6002,7 @@ FLASHMEM void updatekeyTrackSW(boolean announce) {
       }
       midiCCDCOLower(CC_KEYTRACK_SW, 0);
       midiCCOut(CCkeyTrackSW, 0);
-      midiCCDisplaySW(CCkeyTrackSW, 0);
+      //midiCCDisplaySW(CCkeyTrackSW, 0);
       if (wholemode) {
         midiCCDCOUpper(CC_KEYTRACK_SW, 0);
       }
@@ -6024,7 +6014,7 @@ FLASHMEM void updatekeyTrackSW(boolean announce) {
       }
       midiCCDCOLower(CC_KEYTRACK_SW, 127);
       midiCCOut(CCkeyTrackSW, 127);
-      midiCCDisplaySW(CCkeyTrackSW, 1);
+      //midiCCDisplaySW(CCkeyTrackSW, 1);
       if (wholemode) {
         midiCCDCOUpper(CC_KEYTRACK_SW, 127);
       }
@@ -6042,7 +6032,7 @@ FLASHMEM void updatesyncSW(boolean announce) {
       }
       midiCCDCOUpper(CC_SYNC_MODE, 0);
       midiCCOut(CCsyncSW, 0);
-      midiCCDisplaySW(CCsyncSW, 0);
+      //midiCCDisplaySW(CCsyncSW, 0);
       mcp7.digitalWrite(DCO2_SYNC_LED_RED, LOW);
       mcp7.digitalWrite(DCO2_SYNC_LED_GREEN, LOW);
     }
@@ -6053,7 +6043,7 @@ FLASHMEM void updatesyncSW(boolean announce) {
       }
       midiCCDCOUpper(CC_SYNC_MODE, 64);
       midiCCOut(CCsyncSW, 64);
-      midiCCDisplaySW(CCsyncSW, 1);
+      //midiCCDisplaySW(CCsyncSW, 1);
       mcp7.digitalWrite(DCO2_SYNC_LED_RED, HIGH);
       mcp7.digitalWrite(DCO2_SYNC_LED_GREEN, LOW);
     }
@@ -6064,7 +6054,7 @@ FLASHMEM void updatesyncSW(boolean announce) {
       }
       midiCCDCOUpper(CC_SYNC_MODE, 127);
       midiCCOut(CCsyncSW, 127);
-      midiCCDisplaySW(CCsyncSW, 2);
+      //midiCCDisplaySW(CCsyncSW, 2);
       mcp7.digitalWrite(DCO2_SYNC_LED_RED, LOW);
       mcp7.digitalWrite(DCO2_SYNC_LED_GREEN, HIGH);
     }
@@ -6076,7 +6066,7 @@ FLASHMEM void updatesyncSW(boolean announce) {
       }
       midiCCDCOLower(CC_SYNC_MODE, 0);
       midiCCOut(CCsyncSW, 0);
-      midiCCDisplaySW(CCsyncSW, 0);
+      //midiCCDisplaySW(CCsyncSW, 0);
       if (wholemode) {
         midiCCDCOUpper(CC_SYNC_MODE, 0);
       }
@@ -6090,7 +6080,7 @@ FLASHMEM void updatesyncSW(boolean announce) {
       }
       midiCCDCOLower(CC_SYNC_MODE, 64);
       midiCCOut(CCsyncSW, 127);
-      midiCCDisplaySW(CCsyncSW, 1);
+      //midiCCDisplaySW(CCsyncSW, 1);
       if (wholemode) {
         midiCCDCOUpper(CC_SYNC_MODE, 64);
       }
@@ -6104,7 +6094,7 @@ FLASHMEM void updatesyncSW(boolean announce) {
       }
       midiCCDCOLower(CC_SYNC_MODE, 127);
       midiCCOut(CCsyncSW, 127);
-      midiCCDisplaySW(CCsyncSW, 2);
+      //midiCCDisplaySW(CCsyncSW, 2);
       if (wholemode) {
         midiCCDCOUpper(CC_SYNC_MODE, 127);
       }
@@ -6262,7 +6252,7 @@ FLASHMEM void updatefx_Bypass(boolean announce) {
       }
       midiCCDCOUpper(CC_FV1_INTERNAL, 0);
       midiCCOut(CCfx_Bypass, 0);
-      midiCCDisplaySW(CCfx_Bypass, 0);
+      //midiCCDisplaySW(CCfx_Bypass, 0);
       mcp15.digitalWrite(FX_BYPASS_LED, LOW);
     } else {
       if (announce) {
@@ -6271,7 +6261,7 @@ FLASHMEM void updatefx_Bypass(boolean announce) {
       }
       midiCCDCOUpper(CC_FV1_INTERNAL, 127);
       midiCCOut(CCfx_Bypass, 127);
-      midiCCDisplaySW(CCfx_Bypass, 1);
+      //midiCCDisplaySW(CCfx_Bypass, 1);
       mcp15.digitalWrite(FX_BYPASS_LED, HIGH);
     }
   } else {
@@ -6285,7 +6275,7 @@ FLASHMEM void updatefx_Bypass(boolean announce) {
         midiCCDCOUpper(CC_FV1_INTERNAL, 0);
       }
       midiCCOut(CCfx_Bypass, 0);
-      midiCCDisplaySW(CCfx_Bypass, 0);
+      //midiCCDisplaySW(CCfx_Bypass, 0);
       mcp15.digitalWrite(FX_BYPASS_LED, LOW);
     } else {
       if (announce) {
@@ -6297,7 +6287,7 @@ FLASHMEM void updatefx_Bypass(boolean announce) {
         midiCCDCOUpper(CC_FV1_INTERNAL, 127);
       }
       midiCCOut(CCfx_Bypass, 127);
-      midiCCDisplaySW(CCfx_Bypass, 1);
+      //midiCCDisplaySW(CCfx_Bypass, 1);
       mcp15.digitalWrite(FX_BYPASS_LED, HIGH);
     }
   }
@@ -6421,7 +6411,7 @@ FLASHMEM void updatenoiseSrc(boolean announce) {
       }
       midiCCVoiceUpper(VB_NOISE_SOURCE, 0);
       midiCCOut(CCnoiseSrc, 0);
-      midiCCDisplaySW(CCnoiseSrc, 0);
+      //midiCCDisplaySW(CCnoiseSrc, 0);
       mcp6.digitalWrite(NOISE_SRC_LED_RED, HIGH);
       mcp6.digitalWrite(NOISE_SRC_LED_GREEN, LOW);
     } else {
@@ -6431,7 +6421,7 @@ FLASHMEM void updatenoiseSrc(boolean announce) {
       }
       midiCCVoiceUpper(VB_NOISE_SOURCE, 127);
       midiCCOut(CCnoiseSrc, 127);
-      midiCCDisplaySW(CCnoiseSrc, 1);
+      //midiCCDisplaySW(CCnoiseSrc, 1);
       mcp6.digitalWrite(NOISE_SRC_LED_RED, LOW);
       mcp6.digitalWrite(NOISE_SRC_LED_GREEN, HIGH);
     }
@@ -6446,7 +6436,7 @@ FLASHMEM void updatenoiseSrc(boolean announce) {
         midiCCVoiceUpper(VB_NOISE_SOURCE, 0);
       }
       midiCCOut(CCnoiseSrc, 0);
-      midiCCDisplaySW(CCnoiseSrc, 0);
+      //midiCCDisplaySW(CCnoiseSrc, 0);
       mcp6.digitalWrite(NOISE_SRC_LED_RED, HIGH);
       mcp6.digitalWrite(NOISE_SRC_LED_GREEN, LOW);
     } else {
@@ -6459,7 +6449,7 @@ FLASHMEM void updatenoiseSrc(boolean announce) {
         midiCCVoiceUpper(VB_NOISE_SOURCE, 127);
       }
       midiCCOut(CCnoiseSrc, 127);
-      midiCCDisplaySW(CCnoiseSrc, 1);
+      //midiCCDisplaySW(CCnoiseSrc, 1);
       mcp6.digitalWrite(NOISE_SRC_LED_RED, LOW);
       mcp6.digitalWrite(NOISE_SRC_LED_GREEN, HIGH);
     }
@@ -6474,7 +6464,7 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FM_ENABLE, 0);
-      midiCCDisplaySW(CCdco_at_SW, 0);
+      //midiCCDisplaySW(CCdco_at_SW, 0);
       midiCCOut(CCdco_at_SW, 0);
       mcp5.digitalWrite(DCO_AT_LED, LOW);
     } else {
@@ -6483,7 +6473,7 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FM_ENABLE, 127);
-      midiCCDisplaySW(CCdco_at_SW, 1);
+      //midiCCDisplaySW(CCdco_at_SW, 1);
       midiCCOut(CCdco_at_SW, 127);
       mcp5.digitalWrite(DCO_AT_LED, HIGH);
     }
@@ -6497,7 +6487,7 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FM_ENABLE, 0);
       }
-      midiCCDisplaySW(CCdco_at_SW, 0);
+      //midiCCDisplaySW(CCdco_at_SW, 0);
       midiCCOut(CCdco_at_SW, 0);
       mcp5.digitalWrite(DCO_AT_LED, LOW);
     } else {
@@ -6509,7 +6499,7 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FM_ENABLE, 127);
       }
-      midiCCDisplaySW(CCdco_at_SW, 1);
+      //midiCCDisplaySW(CCdco_at_SW, 1);
       midiCCOut(CCdco_at_SW, 127);
       mcp5.digitalWrite(DCO_AT_LED, HIGH);
     }
@@ -6524,18 +6514,18 @@ FLASHMEM void updatefilter_at_SW(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FILTER_ENABLE, 0);
-      midiCCDisplaySW(CCfilter_at_SW, 0);
+      //midiCCDisplaySW(CCfilter_at_SW, 0);
       midiCCOut(CCfilter_at_SW, 0);
-      mcp5.digitalWrite(FILTER_AT_LED, LOW);
+      mcp8.digitalWrite(FILTER_AT_LED, LOW);
     } else {
       if (announce) {
         showCurrentParameterPage("Filter Aftertouch", "On");
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FILTER_ENABLE, 127);
-      midiCCDisplaySW(CCfilter_at_SW, 1);
+      //midiCCDisplaySW(CCfilter_at_SW, 1);
       midiCCOut(CCfilter_at_SW, 127);
-      mcp5.digitalWrite(FILTER_AT_LED, HIGH);
+      mcp8.digitalWrite(FILTER_AT_LED, HIGH);
     }
   } else {
     if (lowerData[P_filter_at_SW] == 0) {
@@ -6547,9 +6537,9 @@ FLASHMEM void updatefilter_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FILTER_ENABLE, 0);
       }
-      midiCCDisplaySW(CCfilter_at_SW, 0);
+      //midiCCDisplaySW(CCfilter_at_SW, 0);
       midiCCOut(CCfilter_at_SW, 0);
-      mcp5.digitalWrite(FILTER_AT_LED, LOW);
+      mcp8.digitalWrite(FILTER_AT_LED, LOW);
     } else {
       if (announce) {
         showCurrentParameterPage("Filter Aftertouch", "On");
@@ -6559,9 +6549,9 @@ FLASHMEM void updatefilter_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FILTER_ENABLE, 127);
       }
-      midiCCDisplaySW(CCfilter_at_SW, 1);
+      //midiCCDisplaySW(CCfilter_at_SW, 1);
       midiCCOut(CCfilter_at_SW, 127);
-      mcp5.digitalWrite(FILTER_AT_LED, HIGH);
+      mcp8.digitalWrite(FILTER_AT_LED, HIGH);
     }
   }
 }
@@ -6574,7 +6564,7 @@ FLASHMEM void updatefilterVel(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_FILTER_VELOCITY, 0);
-      midiCCDisplaySW(CCfilterVel, 0);
+      //midiCCDisplaySW(CCfilterVel, 0);
       midiCCOut(CCfilterVel, 0);
       mcp9.digitalWrite(VCF_VELOCITY_LED, LOW);
     } else {
@@ -6583,7 +6573,7 @@ FLASHMEM void updatefilterVel(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_FILTER_VELOCITY, 127);
-      midiCCDisplaySW(CCfilterVel, 1);
+      //midiCCDisplaySW(CCfilterVel, 1);
       midiCCOut(CCfilterVel, 127);
       mcp9.digitalWrite(VCF_VELOCITY_LED, HIGH);
     }
@@ -6597,7 +6587,7 @@ FLASHMEM void updatefilterVel(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_FILTER_VELOCITY, 0);
       }
-      midiCCDisplaySW(CCfilterVel, 0);
+      //midiCCDisplaySW(CCfilterVel, 0);
       midiCCOut(CCfilterVel, 0);
       mcp9.digitalWrite(VCF_VELOCITY_LED, LOW);
     } else {
@@ -6609,7 +6599,7 @@ FLASHMEM void updatefilterVel(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_FILTER_VELOCITY, 127);
       }
-      midiCCDisplaySW(CCfilterVel, 1);
+      //midiCCDisplaySW(CCfilterVel, 1);
       midiCCOut(CCfilterVel, 127);
       mcp9.digitalWrite(VCF_VELOCITY_LED, HIGH);
     }
@@ -6624,7 +6614,7 @@ FLASHMEM void updateenv2_punch(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_VCF_ENV_PUNCH, 127);
-      midiCCDisplaySW(CCenv2_punch, 0);
+      //midiCCDisplaySW(CCenv2_punch, 0);
       midiCCOut(CCenv2_punch, 0);
       mcp15.digitalWrite(VCF_PUNCH_LED, LOW);
     } else {
@@ -6633,7 +6623,7 @@ FLASHMEM void updateenv2_punch(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_VCF_ENV_PUNCH, 0);
-      midiCCDisplaySW(CCenv2_punch, 1);
+      //midiCCDisplaySW(CCenv2_punch, 1);
       midiCCOut(CCenv2_punch, 127);
       mcp15.digitalWrite(VCF_PUNCH_LED, HIGH);
     }
@@ -6647,7 +6637,7 @@ FLASHMEM void updateenv2_punch(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_VCF_ENV_PUNCH, 127);
       }
-      midiCCDisplaySW(CCenv2_punch, 0);
+      //midiCCDisplaySW(CCenv2_punch, 0);
       midiCCOut(CCenv2_punch, 0);
       mcp15.digitalWrite(VCF_PUNCH_LED, LOW);
     } else {
@@ -6659,7 +6649,7 @@ FLASHMEM void updateenv2_punch(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_VCF_ENV_PUNCH, 0);
       }
-      midiCCDisplaySW(CCenv2_punch, 1);
+      //midiCCDisplaySW(CCenv2_punch, 1);
       midiCCOut(CCenv2_punch, 127);
       mcp15.digitalWrite(VCF_PUNCH_LED, HIGH);
     }
@@ -6674,7 +6664,7 @@ FLASHMEM void updateenv3_punch(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_AMP_ENV_PUNCH, 127);
-      midiCCDisplaySW(CCenv3_punch, 0);
+      //midiCCDisplaySW(CCenv3_punch, 0);
       midiCCOut(CCenv3_punch, 0);
       mcp14.digitalWrite(VCA_ENV_PUNCH_LED, LOW);
     } else {
@@ -6683,7 +6673,7 @@ FLASHMEM void updateenv3_punch(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_AMP_ENV_PUNCH, 0);
-      midiCCDisplaySW(CCenv3_punch, 1);
+      //midiCCDisplaySW(CCenv3_punch, 1);
       midiCCOut(CCenv3_punch, 127);
       mcp14.digitalWrite(VCA_ENV_PUNCH_LED, HIGH);
     }
@@ -6697,7 +6687,7 @@ FLASHMEM void updateenv3_punch(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_AMP_ENV_PUNCH, 127);
       }
-      midiCCDisplaySW(CCenv3_punch, 0);
+      //midiCCDisplaySW(CCenv3_punch, 0);
       midiCCOut(CCenv3_punch, 0);
       mcp14.digitalWrite(VCA_ENV_PUNCH_LED, LOW);
     } else {
@@ -6709,7 +6699,7 @@ FLASHMEM void updateenv3_punch(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_AMP_ENV_PUNCH, 0);
       }
-      midiCCDisplaySW(CCenv3_punch, 1);
+      //midiCCDisplaySW(CCenv3_punch, 1);
       midiCCOut(CCenv3_punch, 127);
       mcp14.digitalWrite(VCA_ENV_PUNCH_LED, HIGH);
     }
@@ -6865,7 +6855,7 @@ FLASHMEM void updatevcaLoop(boolean announce) {
         }
         midiCCVoiceUpper(VB_AMP_LOOP_BIT0, 0);
         midiCCVoiceUpper(VB_AMP_LOOP_BIT1, 0);
-        midiCCDisplaySW(CCAmpLoop, 0);
+        //midiCCDisplaySW(CCAmpLoop, 0);
         midiCCOut(CCAmpLoop, 0);
         mcp11.digitalWrite(AMP_LOOP_LED_RED, LOW);
         mcp12.digitalWrite(AMP_LOOP_LED_GREEN, LOW);
@@ -6878,7 +6868,7 @@ FLASHMEM void updatevcaLoop(boolean announce) {
         }
         midiCCVoiceUpper(VB_AMP_LOOP_BIT0, 127);
         midiCCVoiceUpper(VB_AMP_LOOP_BIT1, 0);
-        midiCCDisplaySW(CCAmpLoop, 1);
+        //midiCCDisplaySW(CCAmpLoop, 1);
         midiCCOut(CCAmpLoop, 63);
         mcp11.digitalWrite(AMP_LOOP_LED_RED, HIGH);
         mcp12.digitalWrite(AMP_LOOP_LED_GREEN, LOW);
@@ -6891,7 +6881,7 @@ FLASHMEM void updatevcaLoop(boolean announce) {
         }
         midiCCVoiceUpper(VB_AMP_LOOP_BIT0, 0);
         midiCCVoiceUpper(VB_AMP_LOOP_BIT1, 127);
-        midiCCDisplaySW(CCAmpLoop, 2);
+        //midiCCDisplaySW(CCAmpLoop, 2);
         midiCCOut(CCAmpLoop, 127);
         mcp11.digitalWrite(AMP_LOOP_LED_RED, LOW);
         mcp12.digitalWrite(AMP_LOOP_LED_GREEN, HIGH);
@@ -6910,7 +6900,7 @@ FLASHMEM void updatevcaLoop(boolean announce) {
           midiCCVoiceUpper(VB_AMP_LOOP_BIT0, 0);
           midiCCVoiceUpper(VB_AMP_LOOP_BIT1, 0);
         }
-        midiCCDisplaySW(CCAmpLoop, 0);
+        //midiCCDisplaySW(CCAmpLoop, 0);
         midiCCOut(CCAmpLoop, 0);
         mcp11.digitalWrite(AMP_LOOP_LED_RED, LOW);
         mcp12.digitalWrite(AMP_LOOP_LED_GREEN, LOW);
@@ -6927,7 +6917,7 @@ FLASHMEM void updatevcaLoop(boolean announce) {
           midiCCVoiceUpper(VB_AMP_LOOP_BIT0, 127);
           midiCCVoiceUpper(VB_AMP_LOOP_BIT1, 0);
         }
-        midiCCDisplaySW(CCAmpLoop, 1);
+        //midiCCDisplaySW(CCAmpLoop, 1);
         midiCCOut(CCAmpLoop, 63);
         mcp11.digitalWrite(AMP_LOOP_LED_RED, HIGH);
         mcp12.digitalWrite(AMP_LOOP_LED_GREEN, LOW);
@@ -6944,7 +6934,7 @@ FLASHMEM void updatevcaLoop(boolean announce) {
           midiCCVoiceUpper(VB_AMP_LOOP_BIT0, 0);
           midiCCVoiceUpper(VB_AMP_LOOP_BIT1, 127);
         }
-        midiCCDisplaySW(CCAmpLoop, 2);
+        //midiCCDisplaySW(CCAmpLoop, 2);
         midiCCOut(CCAmpLoop, 127);
         mcp11.digitalWrite(AMP_LOOP_LED_RED, LOW);
         mcp12.digitalWrite(AMP_LOOP_LED_GREEN, HIGH);
@@ -6961,7 +6951,7 @@ FLASHMEM void updatevcaVel(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_AMP_VELOCITY, 0);
-      midiCCDisplaySW(CCvcaVel, 0);
+      //midiCCDisplaySW(CCvcaVel, 0);
       midiCCOut(CCvcaVel, 0);
       mcp11.digitalWrite(AMP_VELOCITY_LED, LOW);
     } else {
@@ -6970,7 +6960,7 @@ FLASHMEM void updatevcaVel(boolean announce) {
         startParameterDisplay();
       }
       midiCCVoiceUpper(VB_AMP_VELOCITY, 127);
-      midiCCDisplaySW(CCvcaVel, 1);
+      //midiCCDisplaySW(CCvcaVel, 1);
       midiCCOut(CCvcaVel, 127);
       mcp11.digitalWrite(AMP_VELOCITY_LED, HIGH);
     }
@@ -6984,7 +6974,7 @@ FLASHMEM void updatevcaVel(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_AMP_VELOCITY, 0);
       }
-      midiCCDisplaySW(CCvcaVel, 0);
+      //midiCCDisplaySW(CCvcaVel, 0);
       midiCCOut(CCvcaVel, 0);
       mcp11.digitalWrite(AMP_VELOCITY_LED, LOW);
     } else {
@@ -6996,7 +6986,7 @@ FLASHMEM void updatevcaVel(boolean announce) {
       if (wholemode) {
         midiCCVoiceUpper(VB_AMP_VELOCITY, 127);
       }
-      midiCCDisplaySW(CCvcaVel, 1);
+      //midiCCDisplaySW(CCvcaVel, 1);
       midiCCOut(CCvcaVel, 127);
       mcp11.digitalWrite(AMP_VELOCITY_LED, HIGH);
     }
@@ -7011,7 +7001,7 @@ FLASHMEM void updatevcaGate(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCvcaGate, 0);
-      midiCCDisplaySW(CCvcaGate, 0);
+      //midiCCDisplaySW(CCvcaGate, 0);
       upperData[P_ampAttack] = upperData[P_oldampAttack];
       upperData[P_ampDecay] = upperData[P_oldampDecay];
       upperData[P_ampSustain] = upperData[P_oldampSustain];
@@ -7027,7 +7017,7 @@ FLASHMEM void updatevcaGate(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCvcaGate, 127);
-      midiCCDisplaySW(CCvcaGate, 1);
+      //midiCCDisplaySW(CCvcaGate, 1);
       midiCCVoiceUpper(VB_VCA_ATTACK, 0);
       midiCCVoiceUpper(VB_VCA_DECAY, 0);
       midiCCVoiceUpper(VB_VCA_SUSTAIN, 127);
@@ -7041,7 +7031,7 @@ FLASHMEM void updatevcaGate(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCvcaGate, 0);
-      midiCCDisplaySW(CCvcaGate, 0);
+      //midiCCDisplaySW(CCvcaGate, 0);
       lowerData[P_ampAttack] = lowerData[P_oldampAttack];
       lowerData[P_ampDecay] = lowerData[P_oldampDecay];
       lowerData[P_ampSustain] = lowerData[P_oldampSustain];
@@ -7063,7 +7053,7 @@ FLASHMEM void updatevcaGate(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCvcaGate, 127);
-      midiCCDisplaySW(CCvcaGate, 1);
+      //midiCCDisplaySW(CCvcaGate, 1);
       midiCCVoiceLower(VB_VCA_ATTACK, 0);
       midiCCVoiceLower(VB_VCA_DECAY, 0);
       midiCCVoiceLower(VB_VCA_SUSTAIN, 127);
@@ -7109,7 +7099,7 @@ FLASHMEM void updateMonoMulti(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCmonoMulti, 0);
-      midiCCDisplaySW(CCmonoMulti, 0);
+      //midiCCDisplaySW(CCmonoMulti, 0);
       mcp13.digitalWrite(LFO3_RETRIG_LED, LOW);
     } else {
       if (announce) {
@@ -7117,7 +7107,7 @@ FLASHMEM void updateMonoMulti(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCmonoMulti, 127);
-      midiCCDisplaySW(CCmonoMulti, 1);
+      //midiCCDisplaySW(CCmonoMulti, 1);
       mcp13.digitalWrite(LFO3_RETRIG_LED, HIGH);
     }
   } else {
@@ -7127,7 +7117,7 @@ FLASHMEM void updateMonoMulti(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCmonoMulti, 0);
-      midiCCDisplaySW(CCmonoMulti, 0);
+      //midiCCDisplaySW(CCmonoMulti, 0);
       if (wholemode) {
         upperData[P_monoMulti] = lowerData[P_monoMulti];
       }
@@ -7138,7 +7128,7 @@ FLASHMEM void updateMonoMulti(boolean announce) {
         startParameterDisplay();
       }
       midiCCOut(CCmonoMulti, 127);
-      midiCCDisplaySW(CCmonoMulti, 1);
+      //midiCCDisplaySW(CCmonoMulti, 1);
       if (wholemode) {
         upperData[P_monoMulti] = lowerData[P_monoMulti];
       }
@@ -7202,7 +7192,7 @@ FLASHMEM void updateLFO1retrig(boolean announce) {
       }
       midiCCDCOUpper(CC_LFO1_RETRIG, 0);
       midiCCOut(CClfo1retrig, 0);
-      midiCCDisplaySW(CClfo1retrig, 0);
+      //midiCCDisplaySW(CClfo1retrig, 0);
       mcp14.digitalWrite(LFO1_RETRIG_LED, LOW);
     } else {
       if (announce) {
@@ -7211,7 +7201,7 @@ FLASHMEM void updateLFO1retrig(boolean announce) {
       }
       midiCCDCOUpper(CC_LFO1_RETRIG, 127);
       midiCCOut(CClfo1retrig, 127);
-      midiCCDisplaySW(CClfo1retrig, 1);
+      //midiCCDisplaySW(CClfo1retrig, 1);
       mcp14.digitalWrite(LFO1_RETRIG_LED, HIGH);
     }
   } else {
@@ -7222,7 +7212,7 @@ FLASHMEM void updateLFO1retrig(boolean announce) {
       }
       midiCCDCOLower(CC_LFO1_RETRIG, 0);
       midiCCOut(CClfo1retrig, 0);
-      midiCCDisplaySW(CClfo1retrig, 0);
+      //midiCCDisplaySW(CClfo1retrig, 0);
       if (wholemode) {
         midiCCDCOUpper(CC_LFO1_RETRIG, 0);
       }
@@ -7234,7 +7224,7 @@ FLASHMEM void updateLFO1retrig(boolean announce) {
       }
       midiCCDCOLower(CC_LFO1_RETRIG, 127);
       midiCCOut(CClfo1retrig, 127);
-      midiCCDisplaySW(CClfo1retrig, 1);
+      //midiCCDisplaySW(CClfo1retrig, 1);
       if (wholemode) {
         midiCCDCOUpper(CC_LFO1_RETRIG, 127);
       }
@@ -8467,8 +8457,6 @@ void upperParamsToDisplay() {
   updateATDepth(0);
   updateamDepth(0);
   updateFilterType(0);
-  updateeffectBankSW(0);
-  updateeffectNumSW(0);
   updatearpRate(0);
   updateosc1envPWM(0);
   updateosc2envPWM(0);
@@ -8535,8 +8523,6 @@ void lowerParamsToDisplay() {
   updateamDepth(0);
   updateATDepth(0);
   updateFilterType(0);
-  updateeffectBankSW(0);
-  updateeffectNumSW(0);
   updatearpRate(0);
   updateosc1envPWM(0);
   updateosc2envPWM(0);
@@ -8546,6 +8532,7 @@ void lowerParamsToDisplay() {
 }
 
 void setAllButtons() {
+
   updateosc1Range(0);
   updateosc2Range(0);
   updateLFO1Waveform(0);
@@ -8563,6 +8550,7 @@ void setAllButtons() {
   updateMonoMulti(0);
   updatelfoMultiplier(0);
   updatevcaVel(0);
+  updateeffectBankSW(0);
   updatefilterLoop(0);
   updatevcaLoop(0);
   updatefilterenvLogLin(0);
@@ -8574,6 +8562,7 @@ void setAllButtons() {
   updatenoiseSrc(0);
   updateArpLEDs();
   updatedriftSW(0);
+  updateeffectNumSW(0);
 }
 
 String getCurrentPatchData() {
@@ -8655,12 +8644,12 @@ void midiCCVoiceUpper(byte cc, byte value) {
 
 void midiCCDisplay(byte cc, byte value) {
   MIDI6.sendControlChange(cc, value, 1);  //MIDI DIN to panel for switches
-  delay(1);
+  delay(2);
 }
 
 void midiCCDisplaySW(byte cc, byte value) {
   MIDI6.sendControlChange(cc, value, 2);  //MIDI DIN to panel for switches
-  delay(1);
+  delay(2);
 }
 
 void showSettingsPage() {

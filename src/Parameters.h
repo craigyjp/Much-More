@@ -279,6 +279,7 @@ int LFO2Waveformstr = 0;
 int osc2envDepthstr = 0;
 int unisonDetunestr = 0;
 int driftDepthstr = 0;
+int bank = 0;
 
 boolean wholemode = true;
 boolean dualmode = false;
