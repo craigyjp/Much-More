@@ -4,6 +4,10 @@ A polyphonic 12 voice bi-timbral synthesizer based on the 6 voice cards I design
 
 This is the controller panel and assigner for the voice cards which are self contained and fully MIDI controlled.
 
+The controller talks to two voice boards on seperate MIDI outputs, each voice board is identical so commands are common between them and only the output it is sent on determines which voice card responds.
+
+The displays are also updated on a seperate MIDI output and are updated when layers are switched or parameters are changed. In general only the rotary controls are shown in the displays as the button LEDs show the status of the buttons.
+
 All knobs are encoder based so continually variable, hence no legend.
 
 Screens update in yellow for lower layer and cyan for the upper layer.
