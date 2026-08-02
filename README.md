@@ -19,3 +19,7 @@ https://github.com/craigyjp/6-Voice-card-controller-DACs-and-ShiftRegisters
 # DCO source code etc
 
 https://github.com/craigyjp/Simple-Pico-2-RP2350-based-dual-DCO-with-i2s-Audio
+
+# Display boards 0-9
+
+https://github.com/craigyjp/Much-More-Displays
