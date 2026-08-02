@@ -4,4 +4,8 @@ A polyphonic 12 voice bi-timbral synthesizer based on the 6 voice cards I design
 
 This is the controller panel and assigner for the voice cards which are self contained and fully MIDI controlled.
 
+All knobs are encoder based so continually variable, hence no legend.
+
+Screens update in yellow for lower layer and cyan for the upper layer.
+
 ![Synth](Photos/synth.jpg)
