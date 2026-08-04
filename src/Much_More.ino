@@ -3116,17 +3116,11 @@ int getVoiceNo(int note) {
 }
 
 void DinHandlePitchBend(byte channel, int pitch) {
-  if (wholemode) {
-    MIDI7.sendPitchBend(pitch, 9);
+  if (upperData[P_PitchBendLevel] != 0) {
     MIDI8.sendPitchBend(pitch, 9);
   }
-  if (dualmode) {
+  if (lowerData[P_PitchBendLevel] != 0) {
     MIDI7.sendPitchBend(pitch, 9);
-    MIDI8.sendPitchBend(pitch, 9);
-  }
-  if (splitmode) {
-    MIDI7.sendPitchBend(pitch, 9);
-    MIDI8.sendPitchBend(pitch, 9);
   }
 }
 
@@ -3145,8 +3139,8 @@ void getDelayTime() {
 }
 
 void allNotesOff() {
-  midiCCDCOLower(WSallNotesOff, 127);
-  midiCCDCOUpper(WSallNotesOff, 127);
+  midiCCDCOLower(CCallnotesoff, 127);
+  midiCCDCOUpper(CCallnotesoff, 127);
 }
 
 FLASHMEM void updateLFO2Rate(boolean announce) {
@@ -4362,6 +4356,7 @@ FLASHMEM void updatePitchBendDepth(boolean announce) {
     midiCCDisplay(CCPitchBend, int(lowerData[P_PitchBendLevel] * 10.58));
     if (wholemode) {
       midiCCDCOUpper(CC_PITCHBEND_RANGE, lowerData[P_PitchBendLevel]);
+      upperData[P_PitchBendLevel] = lowerData[P_PitchBendLevel];
     }
   }
 }
@@ -6464,7 +6459,6 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FM_ENABLE, 0);
-      //midiCCDisplaySW(CCdco_at_SW, 0);
       midiCCOut(CCdco_at_SW, 0);
       mcp5.digitalWrite(DCO_AT_LED, LOW);
     } else {
@@ -6473,7 +6467,6 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FM_ENABLE, 127);
-      //midiCCDisplaySW(CCdco_at_SW, 1);
       midiCCOut(CCdco_at_SW, 127);
       mcp5.digitalWrite(DCO_AT_LED, HIGH);
     }
@@ -6487,7 +6480,6 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FM_ENABLE, 0);
       }
-      //midiCCDisplaySW(CCdco_at_SW, 0);
       midiCCOut(CCdco_at_SW, 0);
       mcp5.digitalWrite(DCO_AT_LED, LOW);
     } else {
@@ -6499,7 +6491,6 @@ FLASHMEM void updatedco_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FM_ENABLE, 127);
       }
-      //midiCCDisplaySW(CCdco_at_SW, 1);
       midiCCOut(CCdco_at_SW, 127);
       mcp5.digitalWrite(DCO_AT_LED, HIGH);
     }
@@ -6514,7 +6505,6 @@ FLASHMEM void updatefilter_at_SW(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FILTER_ENABLE, 0);
-      //midiCCDisplaySW(CCfilter_at_SW, 0);
       midiCCOut(CCfilter_at_SW, 0);
       mcp8.digitalWrite(FILTER_AT_LED, LOW);
     } else {
@@ -6523,7 +6513,6 @@ FLASHMEM void updatefilter_at_SW(boolean announce) {
         startParameterDisplay();
       }
       midiCCDCOUpper(CC_AT_FILTER_ENABLE, 127);
-      //midiCCDisplaySW(CCfilter_at_SW, 1);
       midiCCOut(CCfilter_at_SW, 127);
       mcp8.digitalWrite(FILTER_AT_LED, HIGH);
     }
@@ -6537,7 +6526,6 @@ FLASHMEM void updatefilter_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FILTER_ENABLE, 0);
       }
-      //midiCCDisplaySW(CCfilter_at_SW, 0);
       midiCCOut(CCfilter_at_SW, 0);
       mcp8.digitalWrite(FILTER_AT_LED, LOW);
     } else {
@@ -6549,7 +6537,6 @@ FLASHMEM void updatefilter_at_SW(boolean announce) {
       if (wholemode) {
         midiCCDCOUpper(CC_AT_FILTER_ENABLE, 127);
       }
-      //midiCCDisplaySW(CCfilter_at_SW, 1);
       midiCCOut(CCfilter_at_SW, 127);
       mcp8.digitalWrite(FILTER_AT_LED, HIGH);
     }
@@ -7248,6 +7235,14 @@ void updatePatchname() {
 void myControlChange(byte channel, byte control, int value) {
 
   switch (control) {
+
+    case CCmodwheel:
+
+        midiCCDCOLower(CC_MOD_WHEEL, value);
+        midiCCDCOUpper(CC_MOD_WHEEL, value);
+        midiCCOut(CC_MOD_WHEEL, value);
+
+      break;
 
     case CCglideTime:
       if (upperSW) {
@@ -8219,17 +8214,6 @@ void myControlChange(byte channel, byte control, int value) {
       updatelowerSW(1);
       break;
 
-    case CCmodwheel:
-      if (upperSW) {
-        midiCCDCOUpper(WSmodwheel, value / 8);  // divided by 8 because the convert bumps it up to 1023
-      } else {
-        midiCCDCOLower(WSmodwheel, value / 8);
-        if (wholemode) {
-          midiCCDCOUpper(WSmodwheel, value / 8);
-        }
-      }
-      break;
-
     case CCallnotesoff:
       allNotesOff();
       break;
@@ -8272,55 +8256,9 @@ void myProgramChange(byte channel, byte program) {
 
 void myAfterTouch(byte channel, byte value) {
 
-  afterTouch = (value * 1023) / 127;  // Exact scaling, range 1023
-  afterTouchU = (afterTouch * upperData[P_ATDepth]) / 1023;
-  afterTouchL = (afterTouch * lowerData[P_ATDepth]) / 1023;
+  MIDI8.sendAfterTouch(value, 9);
+  MIDI7.sendAfterTouch(value, 9);
 
-  switch (upperData[P_AfterTouchDest]) {
-    case 1:
-      MIDI8.sendAfterTouch(value, 9);
-
-      break;
-    case 2:
-      upperData[P_filterCutoff] = (oldfilterCutoffU + afterTouchU);
-      if (afterTouchU < 10) {
-        upperData[P_filterCutoff] = oldfilterCutoffU;
-      }
-      if (upperData[P_filterCutoff] > 1023) {
-        upperData[P_filterCutoff] = 1023;
-      }
-      break;
-    case 3:
-      upperData[P_filterLFO] = afterTouchU;
-      break;
-    case 4:
-      upperData[P_amDepth] = afterTouchU;
-      break;
-  }
-  switch (lowerData[P_AfterTouchDest]) {
-    case 1:
-      MIDI7.sendAfterTouch(value, 9);
-
-      if (wholemode) {
-        MIDI8.sendAfterTouch(value, 1);
-      }
-      break;
-    case 2:
-      lowerData[P_filterCutoff] = (oldfilterCutoffL + afterTouchL);
-      if (afterTouchL < 10) {
-        lowerData[P_filterCutoff] = oldfilterCutoffL;
-      }
-      if (lowerData[P_filterCutoff] > 1023) {
-        lowerData[P_filterCutoff] = 1023;
-      }
-      break;
-    case 3:
-      lowerData[P_filterLFO] = afterTouchL;
-      break;
-    case 4:
-      lowerData[P_amDepth] = afterTouchL;
-      break;
-  }
 }
 
 void recallPatch(int patchNo) {

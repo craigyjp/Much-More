@@ -1,7 +1,6 @@
 //MIDI CC control numbers
 //These broadly follow standard CC assignments
 #define   CCmodwheel  1 //pitch LFO amount - less from mod wheel
-#define   CCLfoDepth  3 //pitch LFO amount - panel control
 
 #define   CCfx_Bypass 4
 #define   CCglideTime 5
@@ -64,7 +63,7 @@
 
 #define   CCglideSW 65
 #define   CCPitchBend 66
-#define   CCMWDepth 67
+
 #define   CCosc1PulseLevel 68
 #define   CCosc1SawLevel 69
 #define   CCLFO1Slope 70
@@ -256,34 +255,5 @@
 #define VB_MULTIPLIER_BIT0 86
 #define VB_LFO3_ALT 87
 
-// CC values used in the WAVEshare to control params
-
-#define   WSmodwheel  1 //pitch LFO amount - less from mod wheel
-#define   WSglideTime 5 // 0-127
-#define   WSglideSW 65  // > 63
-#define   WSinterval 14 // 0-12
-#define   WSdetune 15   // 0-127
-#define   WSbendRange 16 // 0-127
-#define   WSmodDepth 17 // 0-127
-#define   WStmDepth 18 // 0-127
-#define   WSATmodDepth 19 // 0-127
-#define   WSATtmDepth 20 // 0-127
-#define   WSosc1oct 21  // 0, 63, 127
-#define   WSosc2oct 22  // 0, 63, 127
-#define   WSosc1PW 23 // 0-127
-#define   WSosc1PWM 24 // 0-127
-#define   WSosc2PW 25 // 0-127
-#define   WSosc2PWM 26 // 0-127
-
-#define   WSkeytrack 27 // 0-127
-#define   WSkeytrackSW 28 // > 63
-#define   WSsyncW 29 // > 63
-#define   WSFMDepth 30 // > 63
-
-#define   VBFILTERPOLE 64 // > 63
-#define   WSautotune 121 // > 63
-#define   WSresetAutotune 122 // > 63
-#define   WSallNotesOff 123 // > 63
-#define   WSkeyboardMode 127 // > 63
 
 

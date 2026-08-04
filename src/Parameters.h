@@ -213,12 +213,6 @@ int chordHoldSW = 0;
 int chordHoldU = 0;
 int chordHoldL = 0;
 
-float afterTouch = 0;
-float afterTouchU = 0;
-float afterTouchL = 0;
-int AfterTouchDest = 0;
-int AfterTouchDestU = 0;
-int AfterTouchDestL = 0;
 float LFO2Ratestr = 0;
 float fmDepthstr = 0;
 float ATDepthstr = 0;
